@@ -110,7 +110,7 @@ class EmojiChengyu(TinyApp):
 
     def next(self, body):
         if self.game.get('last') is None:
-            self.wechat_bot.send_one_case(body)
+            self.send_one_case(body)
         else:
             ok = self.check_one_case(body)
             if ok and self.flag:
