@@ -97,6 +97,7 @@ class EmojiChengyu(TinyApp):
         self.wechat_bot.send_txt_msg(to=body['id2'], content=item['emoji'])
         self.game['last'] = item
         self.game['last_time'] = int(time.time())
+        print(item['word'], item['emoji'])
         return True
 
     def check_one_case(self, body):
@@ -108,10 +109,12 @@ class EmojiChengyu(TinyApp):
         content = body['content']
         answer = last_item['word']
         if content != answer:
+            # timeout tips
             if time.time() - last_create_time >= 30:
                 tip_content = '答案提示 {}'.format(answer[0] + '*' * (len(answer) - 1))
                 self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
                 return False
+            # timeout
             elif time.time() - last_create_time >= 60:
                 reply_content = '很遗憾, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
                 self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
