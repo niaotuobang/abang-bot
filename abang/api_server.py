@@ -61,7 +61,7 @@ class EmojiChengyu(TinyApp):
     STOP_WORD = '结束游戏'
 
     def on_flag_change(self, new_flag):
-        supper().on_flag_change(new_flag)
+        super().on_flag_change(new_flag)
         if new_flag:
             self.game = {}
             self.game['winner'] = defaultdict(int)
