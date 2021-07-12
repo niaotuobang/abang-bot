@@ -23,7 +23,7 @@ class TinyApp(object):
         if not self.flag and content == self.START_WORD:
             self.flag = True
             self.on_flag_change(self.flag)
-        if self.falg and content == self.STOP_WORD:
+        if self.flag and content == self.STOP_WORD:
             self.flag = False
             self.on_flag_change(self.flag)
 
