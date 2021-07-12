@@ -93,7 +93,7 @@ class EmojiChengyu(TinyApp):
         if len(self.game['items']) == 0:
             return False
         item = self.game['items'].pop(0)
-        self.send_txt_msg(to=body['id2'], content=item['emoji'])
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=item['emoji'])
         self.game['last'] = item
         return True
 
@@ -105,12 +105,12 @@ class EmojiChengyu(TinyApp):
 
         self.game['winner'][body['id1']] += 1
         reply_content = '恭喜猜对了, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
-        self.send_txt_msg(to=body['id2'], content=reply_content)
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
         return True
 
     def next(self, body):
         if self.game.get('last') is None:
-            self.send_one_case(body)
+            self.wechat_bot.send_one_case(body)
         else:
             ok = self.check_one_case(body)
             if ok and self.flag:
