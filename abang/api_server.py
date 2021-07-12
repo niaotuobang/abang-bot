@@ -95,7 +95,7 @@ class EmojiChengyu(TinyApp):
             return False
         item = self.game['items'].pop(0)
 
-        question = '题目({}个字): {}'.foramt(len(item['word']), item['emoji'])
+        question = '题目({}个字): {}'.format(len(item['word']), item['emoji'])
         self.wechat_bot.send_txt_msg(to=body['id2'], content=question)
         self.game['last'] = {
             'item': item,
