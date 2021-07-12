@@ -4,6 +4,9 @@ from collections import defaultdict
 from flask import Flask
 from flask import request
 
+from emoji_chengyu.chengyu import gen_one_pair
+
+
 from wx_sdk import WechatBot
 from wx_sdk import RECV_TXT_MSG, HEART_BEAT
 
@@ -65,9 +68,48 @@ class EmojiChengyu(TinyApp):
         if new_flag:
             self.game = {}
             self.game['winner'] = defaultdict(int)
+            self.game['items'] = []
+            self.game['checked'] = []
+            self.game['last'] = None
+            self.make_more_item()
+        else:
+            # TODO: send the winner
+            self.game = {}
+
+    def make_more_item(self):
+        N = 100
+        pairs = [gen_one_pair() for i in range(N)]
+        pairs = list(filter(None, pairs))
+        pairs.sort(key=lambda pair: pair['emojis'].count(None))
+
+        self.game['items'] = pairs[:40]
+
+    def send_one_case(self, body):
+        if len(self.game['items']) == 0:
+            return False
+        item = self.game['items'].pop(0)
+        self.send_txt_msg(to=body['id2'], content=item['emoji'])
+        self.game['last'] = item
+        return True
+
+    def check_one_case(self, body):
+        last_item = self.game.get('last')
+        content = body['content']
+        if content != last_item['word']:
+            return False
+
+        self.game['winner'][body['id1']] += 1
+        reply_content = '恭喜猜对了, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
+        self.send_txt_msg(to=body['id2'], content=reply_content)
+        return True
 
     def next(self, body):
-        return None
+        if self.game.get('last') is None:
+            self.send_one_case(body)
+        else:
+            ok = self.check_one_case(body)
+            if ok and self.flag:
+                self.send_one_case(body)
 
 
 channel_config = {}
