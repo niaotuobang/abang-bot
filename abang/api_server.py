@@ -3,6 +3,7 @@ import _locale
 _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8'])
 
 
+import time
 from collections import defaultdict
 
 
@@ -95,13 +96,28 @@ class EmojiChengyu(TinyApp):
         item = self.game['items'].pop(0)
         self.wechat_bot.send_txt_msg(to=body['id2'], content=item['emoji'])
         self.game['last'] = item
+        self.game['last_time'] = int(time.time())
         return True
 
     def check_one_case(self, body):
         last_item = self.game.get('last')
-        content = body['content']
-        if content != last_item['word']:
+        if not last_item:
             return False
+
+        last_create_time = self.game['last_time']
+        content = body['content']
+        answer = last_item['word']
+        if content != answer:
+            if time.time() - last_create_time >= 30:
+                tip_content = '答案提示 {}'.format(answer[0] + '*' * (len(answer) - 1))
+                self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
+                return False
+            elif time.time() - last_create_time >= 60:
+                reply_content = '很遗憾, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
+                self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
+                return True
+            else:
+                return False
 
         self.game['winner'][body['id1']] += 1
         reply_content = '恭喜猜对了, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
