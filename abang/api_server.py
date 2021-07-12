@@ -83,12 +83,14 @@ class EmojiChengyu(TinyApp):
             self.game = {}
 
     def make_more_item(self):
-        N = 100
-        pairs = [gen_one_pair() for i in range(N)]
-        pairs = list(filter(None, pairs))
+        N = 50
+        pairs = [gen_one_pair(search_count=500) for i in range(N)]
+        pairs = filter(None, pairs)
+        pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
+        pairs = list(pairs)
         pairs.sort(key=lambda pair: pair['emojis'].count(None))
 
-        self.game['items'] = pairs[:40]
+        self.game['items'] = pairs[:20]
 
     def send_one_case(self, body):
         if len(self.game['items']) == 0:
@@ -124,7 +126,7 @@ class EmojiChengyu(TinyApp):
             # tip
             if not self.game['last']['tip']:
                 if time.time() - last_create_time >= 20 or content == '提示':
-                    tip_content = '答案提示 {}'.format(answer[0] + '*' * (len(answer) - 1))
+                    tip_content = '答案提示 {}'.format(answer[0] + '*' + answer[2] + '*')
                     self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
                     self.game['last']['tip'] = True
                     return False
