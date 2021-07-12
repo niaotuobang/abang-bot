@@ -5,7 +5,7 @@ from flask import Flask
 from flask import request
 
 from wx_sdk import WechatBot
-from wx_sdk import RECV_TXT_MSG
+from wx_sdk import RECV_TXT_MSG, HEART_BEAT
 
 
 app = Flask(__name__)
@@ -75,6 +75,9 @@ channel_config = {}
 @app.route('/on_message', methods=['GET', 'POST'])
 def on_message():
     body = request.json
+
+    if body['type'] == HEART_BEAT:
+        return {}
 
     channel_id = body['id2']
     if channel_id not in channel_config:
