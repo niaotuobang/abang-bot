@@ -78,10 +78,6 @@ class EmojiChengyu(TinyApp):
             self.game['checked'] = []
             self.game['last'] = None
             self.make_more_item()
-
-            tip_content = '最多{}个题目,每次问题20秒后提示1个字, 40秒后公布答案'.format(
-                len(self.game['items']))
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
         else:
             # TODO: send the winner
             self.game = {}
@@ -101,32 +97,39 @@ class EmojiChengyu(TinyApp):
 
         question = '题目({}个字): {}'.foramt(len(item['word']), item['emoji'])
         self.wechat_bot.send_txt_msg(to=body['id2'], content=question)
-        self.game['last'] = item
-        self.game['last_time'] = int(time.time())
+        self.game['last'] = {
+            'item': item,
+            'create_time': time.time(),
+            'tip': False,
+        }
+
         print(item['word'], item['emoji'])
         return True
 
     def check_one_case(self, body):
-        last_item = self.game.get('last')
-        if not last_item:
+        if 'last' not in self.game:
             return False
 
-        last_create_time = self.game['last_time']
+        last_item = self.game['last']['item']
+        last_create_time = self.game['last']['create_time']
+
         content = body['content']
         answer = last_item['word']
         if content != answer:
-            # timeout tips
-            if time.time() - last_create_time >= 20 or content == '提示':
+            # timeout
+            if time.time() - last_create_time >= 45 or content == '我要答案':
                 reply_content = '很遗憾, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
                 self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
                 return True
-            # timeout
-            elif time.time() - last_create_time >= 40 or content == '我要答案':
-                tip_content = '答案提示 {}'.format(answer[0] + '*' * (len(answer) - 1))
-                self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
-                return False
-            else:
-                return False
+            # tip
+            if not self.game['last']['tip']:
+                if time.time() - last_create_time >= 20 or content == '提示':
+                    tip_content = '答案提示 {}'.format(answer[0] + '*' * (len(answer) - 1))
+                    self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
+                    self.game['last']['tip'] = True
+                    return False
+
+            return False
 
         self.game['winner'][body['id1']] += 1
         reply_content = '恭喜猜对了, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
@@ -135,6 +138,10 @@ class EmojiChengyu(TinyApp):
 
     def next(self, body):
         if self.game.get('last') is None:
+            first_content = '最多{}个题目,每次问题20秒后提示1个字, 45秒后公布答案'.format(
+                len(self.game['items']))
+            self.wechat_bot.send_txt_msg(to=body['id2'], content=first_content)
+            # send first question
             self.send_one_case(body)
         else:
             ok = self.check_one_case(body)
