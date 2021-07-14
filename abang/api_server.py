@@ -233,6 +233,7 @@ class ChengyuLoong(TinyApp):
 
         if new_word == '简单模式':
             self.game['simple'] = True
+            return None, False
 
         # 提示逻辑
         if new_word == '提示':
