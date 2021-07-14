@@ -247,7 +247,13 @@ class ChengyuLoong(TinyApp):
             if not tip_word:
                 tip_content = '未找到可用成语'
             else:
-                tip_content = '提示: 「{} * {} *」'.format(tip_word[0], tip_word[2])
+                tip_index = choice([1, 2, 3])
+                tip_word_chars = list(tip_word)
+                for i in range(len(tip_word_chars)):
+                    if i not in (0, tip_index):
+                        tip_word_chars[i] = ' * '
+
+                tip_content = '提示: 「{}」'.format(''.join(tip_word_chars))
 
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
