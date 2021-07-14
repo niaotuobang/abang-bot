@@ -199,7 +199,7 @@ class ChengyuLoong(TinyApp):
         self.game['last'] = word
         self.game['count'] += 1
 
-    def check_two_word(new_word, word):
+    def check_two_word(self, new_word, word):
         if not new_word or len(new_word) != 4:
             return False
 
