@@ -170,6 +170,9 @@ class EmojiChengyu(TinyApp):
 
 class ChengyuLoong(TinyApp):
 
+    START_WORDS = ('开始成语接龙',)
+    STOP_WORDS = ('结束游戏', '结束成语接龙')
+
     def on_app_start(self, body):
         self.game = {}
         self.game['winner'] = defaultdict(int)
