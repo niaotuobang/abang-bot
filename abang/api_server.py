@@ -228,6 +228,9 @@ class ChengyuLoong(TinyApp):
         new_word = body['content']
         word = self.game['last']
 
+        if new_word == '简单模式':
+            self.game['simple'] = True
+
         # 提示逻辑
         if new_word == '提示':
             tip_word = self.find_tip_word(word)
