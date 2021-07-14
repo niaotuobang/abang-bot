@@ -21,37 +21,51 @@ app = Flask(__name__)
 
 
 class TinyApp(object):
-    flag = False
+    active = False
 
-    START_WORDS = None
-    STOP_WORDS = None
+    START_WORDS = ()
+    STOP_WORDS = ()
 
     wechat_bot = WechatBot()
 
-    def check_flag(self, body):
+    def check_active(self, body):
         content = body['content']
-        if self.START_WORDS:
-            if not self.flag and content in self.START_WORDS:
-                self.flag = True
-                print(self.__class__.__name__, 'flag change', self.flag)
-                self.on_flag_change(self.flag)
+        if content in self.START_WORDS:
+            self.set_active(True, body)
+        elif content in self.STOP_WORDS:
+            self.set_active(False, body)
 
-        if self.STOP_WORDS:
-            if self.flag and content in self.STOP_WORDS:
-                self.flag = False
-                print(self.__class__.__name__, 'flag change', self.flag)
-                self.on_flag_change(self.flag)
-
-    def on_flag_change(self, body):
-        pass
-
-    def do_next(self, body):
-        if not self.flag:
+    def set_active(self, active, body):
+        if self.active == active:
             return
-        self.next(body)
 
-    def next(self, body):
+        print(self.__class__.__name__, ' self.active, active ', self.active, active)
+        self.active = active
+        if self.active:
+            self.on_app_start(body)
+        else:
+            self.on_app_stop(body)
+
+    def on_app_start(self, body):
         pass
+
+    def on_app_stop(self, body):
+        pass
+
+    def check_next(self, body):
+        if self.active:
+            self.on_next(body)
+
+    def on_next(self, body):
+        pass
+
+
+class Hello(TinyApp):
+    START_WORDS = ('阿邦', '毛毛')
+
+    def on_next(self, body):
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=u'让我来邦你')
+        self.set_active(False, body)
 
 
 class Repeat(TinyApp):
@@ -59,33 +73,30 @@ class Repeat(TinyApp):
     START_WORDS = ('开始复读',)
     STOP_WORDS = ('结束复读',)
 
-    def next(self, body):
+    def on_next(self, body):
         self.wechat_bot.send_txt_msg(to=body['id2'], content=body['content'])
-
-
-class Hello(TinyApp):
-    START_WORDS = ('阿邦', '毛毛')
-
-    def next(self, body):
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=u'让我来邦你')
-        self.flag = False
 
 
 class EmojiChengyu(TinyApp):
     START_WORDS = ('开始表情猜成语',)
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
-    def on_flag_change(self, body):
-        if self.flag:
-            self.game = {}
-            self.game['winner'] = defaultdict(int)
-            self.game['items'] = []
-            self.game['checked'] = []
-            self.game['last'] = None
-            self.make_more_item()
-        else:
-            # TODO: send the winner
-            self.game = {}
+    def on_app_start(self, body):
+        self.game = {}
+        self.game['winner'] = defaultdict(int)
+        self.game['items'] = []
+        self.game['checked'] = []
+        self.game['last'] = None
+        self.make_more_item()
+
+        first_content = '最多{}个题目,每次问题20秒后提示1个字(也可发送"提示"触发), ' + \
+            '45秒后公布答案(也可发送"我要答案"触发)'.format(len(self.game['items']))
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=first_content)
+        self.send_one_case(body)
+
+    def on_app_stop(self, body):
+        # TODO: send the winner
+        self.game = {}
 
     def make_more_item(self):
         N = 50
@@ -94,12 +105,14 @@ class EmojiChengyu(TinyApp):
         pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
         pairs = list(pairs)
         pairs.sort(key=lambda pair: pair['emojis'].count(None))
+        # TODO: 按文字去重
 
-        self.game['items'] = pairs[:20]
+        self.game['items'] = pairs[:30]
 
     def send_one_case(self, body):
         if len(self.game['items']) == 0:
             return False
+
         item = self.game['items'].pop(0)
 
         question = '题目({}个字): {}'.format(len(item['word']), item['emoji'])
@@ -143,34 +156,79 @@ class EmojiChengyu(TinyApp):
         self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
         return True
 
-    def next(self, body):
-        if self.game.get('last') is None:
-            first_content = '最多{}个题目,每次问题20秒后提示1个字(也可发送"提示"触发), 45秒后公布答案(也可发送"我要答案"触发)'.format(
-                len(self.game['items']))
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=first_content)
-            # send first question
+    def on_next(self, body):
+        if not self.game.get('last'):
+            return
+        success = self.check_one_case(body)
+        # 最后一个
+        if not self.game['items']:
+            self.set_active(False, body)
+            return
+        elif success:
             self.send_one_case(body)
-        else:
-            ok = self.check_one_case(body)
-            if ok and self.flag:
-                self.send_one_case(body)
 
 
-class ChengyuList(TinyApp):
-    def on_flag_change(self, body):
-        if self.flag:
-            self.game = {}
-            self.game['winner'] = defaultdict(int)
-            self.game['last'] = self.make_one_item()
-        else:
-            self.game = {}
+class ChengyuLoong(TinyApp):
 
-    def make_one_item():
-        items = ChengyuDataSource.chengyu_list[:len(ChengyuDataSource.chengyu_count_map)]
-        return choice(items)
+    def on_app_start(self, body):
+        self.game = {}
+        self.game['winner'] = defaultdict(int)
+        self.game['count'] = 0
 
-    def next(self, body):
-        pass
+        word = self.make_one_item()
+        self.send_one_case(word, body)
+
+    def on_app_stop(self, body):
+        content = '已结束, 本次接龙长度 {}'.foramt(self.game['count'])
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
+
+    def make_one_item(self):
+        items = ChengyuDataSource.chengyu_list[:ChengyuDataSource.common_chengyu_count]
+        items = filter(lambda item: len(item['words']) == 4, items)
+        item = choice(list(items))
+        return item['word']
+
+    def send_one_case(self, word, body):
+        index = self.game['count'] + 1
+        question = '第 {} 条: 「{}」'.format(index, word)
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=question)
+
+        self.game['last'] = word
+        self.game['count'] += 1
+
+    def check_one_case(self, body):
+        new_word = body['content']
+        word = self.game['last']
+        # check matched
+        if not new_word or len(new_word) != 4:
+            return False
+
+        if new_word not in ChengyuDataSource.chengyu_map:
+            not_content = '抱歉没查到「{}」这个成语'.format(new_word)
+            self.wechat_bot.send_txt_msg(to=body['id2'], content=not_content)
+            return None, False
+
+        if new_word[0] == word[-1]:
+            return new_word, True
+
+        new_item = ChengyuDataSource.chengyu_map[new_word]
+        item = ChengyuDataSource.chengyu_map[word]
+
+        first_pinyin = new_item['pinyins'][0]
+        last_pinyin = item['pinyins'][-1]
+
+        if first_pinyin == last_pinyin:
+            return new_item, True
+
+        if ChengyuDataSource.clean_tone(first_pinyin) == ChengyuDataSource.clean_tone(last_pinyin):
+            return new_item, True
+
+        return None, False
+
+    def on_next(self, body):
+        new_word, success = self.check_one_case(body)
+        if success:
+            self.send_one_case(new_word, body)
 
 
 channel_config = {}
@@ -183,9 +241,12 @@ def on_message():
     if body['type'] == HEART_BEAT:
         return {}
 
+    if 'id2' not in body:
+        return {}
+
     channel_id = body['id2']
     if channel_id not in channel_config:
-        channel_config[channel_id] = {'apps': [Repeat(), Hello(), EmojiChengyu()]}
+        channel_config[channel_id] = {'apps': [Repeat(), Hello(), EmojiChengyu(), ChengyuLoong()]}
 
     config = channel_config[channel_id]
     if body['type'] == RECV_TXT_MSG:
