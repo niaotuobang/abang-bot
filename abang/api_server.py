@@ -228,6 +228,9 @@ class ChengyuLoong(TinyApp):
         new_word = body['content']
         word = self.game['last']
 
+        if not new_word or len(new_word) != 4:
+            return None, False
+
         # 提示逻辑
         if new_word == '提示':
             tip_words = []
@@ -244,6 +247,8 @@ class ChengyuLoong(TinyApp):
 
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
+
+
 
         if new_word not in ChengyuDataSource.chengyu_map:
             not_content = '抱歉没查到「{}」这个成语'.format(new_word)
