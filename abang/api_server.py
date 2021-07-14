@@ -230,16 +230,10 @@ class ChengyuLoong(TinyApp):
 
         # 提示逻辑
         if new_word == '提示':
-            tip_words = []
-            for tip_word in ChengyuDataSource.chengyu_map:
-                if self.check_two_word(tip_word, word):
-                    tip_words.append(tip_word)
-                if len(tip_word) > 5:
-                    break
-            if not tip_words:
+            tip_word = self.find_tip_word(word)
+            if tip_word:
                 tip_content = '未找到可用成语'
             else:
-                tip_word = choice(tip_words)
                 tip_content = '提示: {} * {} *'.format(tip_word[0], tip_word[2])
 
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
@@ -257,6 +251,19 @@ class ChengyuLoong(TinyApp):
             return None, False
 
         return None, False
+
+    def find_tip_word(self, word):
+        tip_words = []
+        for tip_word in ChengyuDataSource.chengyu_map:
+            if self.check_two_word(tip_word, word):
+                tip_words.append(tip_word)
+            if len(tip_words) > 5:
+                break
+
+        if tip_words:
+            return choice(tip_words)
+
+        return None
 
     def on_next(self, body):
         new_word, success = self.check_one_case(body)
