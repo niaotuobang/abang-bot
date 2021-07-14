@@ -254,8 +254,8 @@ def on_message():
     config = channel_config[channel_id]
     if body['type'] == RECV_TXT_MSG:
         for app in config['apps']:
-            app.check_flag(body)
-            app.do_next(body)
+            app.check_active(body)
+            app.check_next(body)
 
     return {}
 
