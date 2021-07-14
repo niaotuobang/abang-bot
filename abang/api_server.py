@@ -177,6 +177,7 @@ class ChengyuLoong(TinyApp):
         self.game = {}
         self.game['winner'] = defaultdict(int)
         self.game['count'] = 0
+        self.game['simple'] = False
 
         word = self.make_one_item()
         self.send_one_case(word, body)
@@ -234,15 +235,19 @@ class ChengyuLoong(TinyApp):
         # 提示逻辑
         if new_word == '提示':
             tip_word = self.find_tip_word(word)
-            if tip_word:
+            if not tip_word:
                 tip_content = '未找到可用成语'
             else:
-                tip_content = '提示: {} * {} *'.format(tip_word[0], tip_word[2])
+                tip_content = '提示: 「{} * {} *」'.format(tip_word[0], tip_word[2])
 
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
 
         ok = self.check_two_word(new_word, word)
+        if not ok and self.game['simple']:
+            if len(new_word) == 4 and new_word[0] == word[-1]:
+                ok = True
+
         if ok:
             ok_content = '恭喜接龙成功 {}'.format(new_word)
             self.wechat_bot.send_txt_msg(to=body['id2'], content=ok_content)
@@ -260,7 +265,7 @@ class ChengyuLoong(TinyApp):
         for tip_word in ChengyuDataSource.chengyu_map:
             if self.check_two_word(tip_word, word):
                 tip_words.append(tip_word)
-            if len(tip_words) > 5:
+            if len(tip_words) > 15:
                 break
 
         if tip_words:
