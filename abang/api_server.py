@@ -184,7 +184,7 @@ class ChengyuLoong(TinyApp):
         self.send_one_case(word, body)
 
     def on_app_stop(self, body):
-        content = '已结束, 本次接龙长度 {} :'.format(self.game['count'])
+        content = '已结束, 本次接龙长度 {} '.format(self.game['count'])
         self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
 
         content = ' -> '.join(self.game['history'])
@@ -253,7 +253,7 @@ class ChengyuLoong(TinyApp):
             return None, False
         # 排除已使用
         elif new_word in self.game['history']:
-            tip_content = '成语「{}」已用过'.foramt(new_word)
+            tip_content = '成语「{}」已用过'.format(new_word)
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
 
