@@ -204,7 +204,7 @@ class ChengyuLoong(TinyApp):
         word = self.game['last']
         # check matched
         if not new_word or len(new_word) != 4:
-            return False
+            return None, False
 
         if new_word not in ChengyuDataSource.chengyu_map:
             not_content = '抱歉没查到「{}」这个成语'.format(new_word)
@@ -221,10 +221,10 @@ class ChengyuLoong(TinyApp):
         last_pinyin = item['pinyins'][-1]
 
         if first_pinyin == last_pinyin:
-            return new_item, True
+            return new_word, True
 
         if ChengyuDataSource.clean_tone(first_pinyin) == ChengyuDataSource.clean_tone(last_pinyin):
-            return new_item, True
+            return new_word, True
 
         return None, False
 
