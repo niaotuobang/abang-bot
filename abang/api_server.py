@@ -10,7 +10,7 @@ from random import choice
 from flask import Flask
 from flask import request
 
-from emoji_chengyu.chengyu import gen_one_pair
+from emoji_chengyu.chengyu import gen_one_emoji_pair
 from emoji_chengyu.data import DataSource as ChengyuDataSource
 
 from wx_sdk import WechatBot
@@ -100,7 +100,7 @@ class EmojiChengyu(TinyApp):
 
     def make_more_item(self):
         N = 50
-        pairs = [gen_one_pair(search_count=500) for i in range(N)]
+        pairs = [gen_one_emoji_pair(search_count=500) for i in range(N)]
         pairs = filter(None, pairs)
         pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
         pairs = list(pairs)
