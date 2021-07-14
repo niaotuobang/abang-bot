@@ -182,7 +182,7 @@ class ChengyuLoong(TinyApp):
         self.send_one_case(word, body)
 
     def on_app_stop(self, body):
-        content = '已结束, 本次接龙长度 {}'.foramt(self.game['count'])
+        content = '已结束, 本次接龙长度 {}'.format(self.game['count'])
         self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
 
     def make_one_item(self):
@@ -228,9 +228,6 @@ class ChengyuLoong(TinyApp):
         new_word = body['content']
         word = self.game['last']
 
-        if not new_word or len(new_word) != 4:
-            return None, False
-
         # 提示逻辑
         if new_word == '提示':
             tip_words = []
@@ -248,18 +245,17 @@ class ChengyuLoong(TinyApp):
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
 
-
-
-        if new_word not in ChengyuDataSource.chengyu_map:
-            not_content = '抱歉没查到「{}」这个成语'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=not_content)
-            return None, False
-
         ok = self.check_two_word(new_word, word)
         if ok:
             ok_content = '恭喜接龙成功 {}'.format(new_word)
             self.wechat_bot.send_txt_msg(to=body['id2'], content=ok_content)
             return new_word, True
+
+        if len(new_word) == 4 and new_word not in ChengyuDataSource.chengyu_map:
+            not_content = '没有查到「{}」这个成语'.format(new_word)
+            self.wechat_bot.send_txt_msg(to=body['id2'], content=not_content)
+            return None, False
+
         return None, False
 
     def on_next(self, body):
