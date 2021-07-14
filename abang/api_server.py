@@ -199,11 +199,50 @@ class ChengyuLoong(TinyApp):
         self.game['last'] = word
         self.game['count'] += 1
 
+    def check_two_word(new_word, word):
+        if not new_word or len(new_word) != 4:
+            return False
+
+        if new_word[0] == word[-1]:
+            return True
+
+        new_item = ChengyuDataSource.chengyu_map.get(new_word)
+        item = ChengyuDataSource.chengyu_map.get(word)
+        if not new_item or not item:
+            return False
+
+        first_pinyin = new_item['pinyins'][0]
+        last_pinyin = item['pinyins'][-1]
+
+        if first_pinyin == last_pinyin:
+            return True
+
+        first_pinyin = ChengyuDataSource.clean_tone(first_pinyin)
+        last_pinyin = ChengyuDataSource.clean_tone(last_pinyin)
+
+        if first_pinyin == last_pinyin:
+            return True
+        return False
+
     def check_one_case(self, body):
         new_word = body['content']
         word = self.game['last']
-        # check matched
-        if not new_word or len(new_word) != 4:
+
+        # 提示逻辑
+        if new_word == '提示':
+            tip_words = []
+            for tip_word in ChengyuDataSource.chengyu_map:
+                if self.check_two_word(tip_word, word):
+                    tip_words.append(tip_word)
+                if len(tip_word) > 5:
+                    break
+            if not tip_words:
+                tip_content = '未找到可用成语'
+            else:
+                tip_word = choice(tip_words)
+                tip_content = '提示: {} * {} *'.format(tip_word[0], tip_word[2])
+
+            self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
 
         if new_word not in ChengyuDataSource.chengyu_map:
@@ -211,21 +250,11 @@ class ChengyuLoong(TinyApp):
             self.wechat_bot.send_txt_msg(to=body['id2'], content=not_content)
             return None, False
 
-        if new_word[0] == word[-1]:
+        ok = self.check_two_word(new_word, word)
+        if ok:
+            ok_content = '恭喜接龙成功 {}'.format(new_word)
+            self.wechat_bot.send_txt_msg(to=body['id2'], content=ok_content)
             return new_word, True
-
-        new_item = ChengyuDataSource.chengyu_map[new_word]
-        item = ChengyuDataSource.chengyu_map[word]
-
-        first_pinyin = new_item['pinyins'][0]
-        last_pinyin = item['pinyins'][-1]
-
-        if first_pinyin == last_pinyin:
-            return new_word, True
-
-        if ChengyuDataSource.clean_tone(first_pinyin) == ChengyuDataSource.clean_tone(last_pinyin):
-            return new_word, True
-
         return None, False
 
     def on_next(self, body):
