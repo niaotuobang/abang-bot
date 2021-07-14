@@ -254,7 +254,7 @@ class ChengyuLoong(TinyApp):
         ok = self.check_two_word(new_word, word)
         # 补充简单模式
         if not ok and self.game['simple']:
-            if len(new_word) == 4 and new_word[0] == word[-1]:
+            if len(new_word) >= 3 and new_word[0] == word[-1]:
                 ok = True
 
         if ok:
