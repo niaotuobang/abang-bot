@@ -184,7 +184,10 @@ class ChengyuLoong(TinyApp):
         self.send_one_case(word, body)
 
     def on_app_stop(self, body):
-        content = '已结束, 本次接龙长度 {}'.format(self.game['count'])
+        content = '已结束, 本次接龙长度 {} :'.format(self.game['count'])
+        self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
+
+        content = ' -> '.join(self.game['history'])
         self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
 
     def make_one_item(self):
@@ -206,13 +209,13 @@ class ChengyuLoong(TinyApp):
         if not new_word or len(new_word) != 4:
             return False
 
-        if new_word[0] == word[-1]:
-            return True
-
         new_item = ChengyuDataSource.chengyu_map.get(new_word)
         item = ChengyuDataSource.chengyu_map.get(word)
         if not new_item or not item:
             return False
+
+        if new_word[0] == word[-1]:
+            return True
 
         first_pinyin = new_item['pinyins'][0]
         last_pinyin = item['pinyins'][-1]
@@ -231,12 +234,15 @@ class ChengyuLoong(TinyApp):
         new_word = body['content']
         word = self.game['last']
 
+        # 控制逻辑
         if new_word == '简单模式':
             self.game['simple'] = True
             return None, False
-
+        elif new_word == '关闭简单模式':
+            self.game['simple'] = False
+            return None, False
         # 提示逻辑
-        if new_word == '提示':
+        elif new_word == '提示':
             tip_word = self.find_tip_word(word)
             if not tip_word:
                 tip_content = '未找到可用成语'
@@ -245,12 +251,13 @@ class ChengyuLoong(TinyApp):
 
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
-        # 排除
-        if new_word in self.game['history']:
+        # 排除已使用
+        elif new_word in self.game['history']:
             tip_content = '成语「{}」已用过'.foramt(new_word)
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
 
+        # 严格检查
         ok = self.check_two_word(new_word, word)
         # 补充简单模式
         if not ok and self.game['simple']:
