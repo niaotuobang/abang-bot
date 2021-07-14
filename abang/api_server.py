@@ -178,6 +178,7 @@ class ChengyuLoong(TinyApp):
         self.game['winner'] = defaultdict(int)
         self.game['count'] = 0
         self.game['simple'] = False
+        self.game['history'] = []
 
         word = self.make_one_item()
         self.send_one_case(word, body)
@@ -199,6 +200,7 @@ class ChengyuLoong(TinyApp):
 
         self.game['last'] = word
         self.game['count'] += 1
+        self.game['history'].append(word)
 
     def check_two_word(self, new_word, word):
         if not new_word or len(new_word) != 4:
@@ -242,8 +244,14 @@ class ChengyuLoong(TinyApp):
 
             self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
             return None, False
+        # 排除
+        if new_word in self.game['history']:
+            tip_content = '成语「{}」已用过'.foramt(new_word)
+            self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
+            return None, False
 
         ok = self.check_two_word(new_word, word)
+        # 补充简单模式
         if not ok and self.game['simple']:
             if len(new_word) == 4 and new_word[0] == word[-1]:
                 ok = True
@@ -253,6 +261,7 @@ class ChengyuLoong(TinyApp):
             self.wechat_bot.send_txt_msg(to=body['id2'], content=ok_content)
             return new_word, True
 
+        # 补充疑问
         if len(new_word) == 4 and new_word not in ChengyuDataSource.chengyu_map:
             not_content = '没有查到「{}」这个成语'.format(new_word)
             self.wechat_bot.send_txt_msg(to=body['id2'], content=not_content)
