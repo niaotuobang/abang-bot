@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 from random import choice
 
+from cachetools import cached, TTLCache
 from flask import Flask
 from flask import request
 
@@ -76,7 +77,17 @@ class Hello(TinyApp):
     START_WORDS = ('阿邦', '毛毛', '阿邦你好')
 
     def on_next(self, body):
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=u'让我来邦你')
+        wx_id = body['id2']
+        # TODO: set to ctx
+        if wx_id != self.ctx.channel_id:
+            nickname = self.ctx.get_member_nick(wx_id)
+            self.wechat_bot.send_at_msg(
+                wx_id=wx_id,
+                room_id=self.ctx.channel_id,
+                content='让我来邦你',
+                nickname=nickname)
+        else:
+            self.wechat_bot.send_txt_msg(to=wx_id, content=u'让我来邦你')
         self.set_active(False, body)
 
 
@@ -322,9 +333,9 @@ class ChannelContext(object):
         self.channel_id = channel_id
         self.apps = apps or []
 
-    def get_nick(self, user_id):
-        # TODO: add cache
-        pass
+    @cached(cache=TTLCache(maxsize=500, ttl=86400))
+    def get_member_nick(self, wx_id):
+        return self.wechat_bot.get_member_nick(wx_id, self.channel_id)
 
 
 # use as db
