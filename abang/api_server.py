@@ -77,14 +77,16 @@ class Hello(TinyApp):
     START_WORDS = ('阿邦', '毛毛', '阿邦你好')
 
     def on_next(self, body):
+        print(body)
         wx_id = body['id2']
+        print(wx_id, self.ctx.channel_id)
         # TODO: set to ctx
         if wx_id != self.ctx.channel_id:
             nickname = self.ctx.get_member_nick(wx_id)
             self.wechat_bot.send_at_msg(
                 wx_id=wx_id,
                 room_id=self.ctx.channel_id,
-                content='让我来邦你',
+                content='@{} 让我来邦你'.format(nickname),
                 nickname=nickname)
         else:
             self.wechat_bot.send_txt_msg(to=wx_id, content=u'让我来邦你')
