@@ -13,7 +13,7 @@ from emoji_chengyu.chengyu import gen_one_emoji_pair
 from emoji_chengyu.data import DataSource as ChengyuDataSource
 
 from wx_sdk import WechatBot
-from wx_sdk import RECV_TXT_MSG, HEART_BEAT
+from wx_sdk import MSGType
 
 
 app = Flask(__name__)
@@ -22,7 +22,7 @@ app = Flask(__name__)
 class TinyApp(object):
     active = False
 
-    MESSAGE_TYPES = (RECV_TXT_MSG, )
+    MESSAGE_TYPES = (MSGType.RECV_TXT_MSG, )
 
     START_WORDS = ()
     STOP_WORDS = ()
@@ -337,9 +337,8 @@ def get_channel_ctx(channel_id):
 
     # 默认开启全部功能
     apps = [Repeat(), Hello(), EmojiChengyu(), ChengyuLoong()]
-    ctx = ChannelContext(
-        channel_id=channel_id,
-        apps=apps)
+
+    ctx = ChannelContext(channel_id=channel_id, apps=apps)
     for app in apps:
         app.set_ctx(ctx)
 
@@ -351,7 +350,7 @@ def get_channel_ctx(channel_id):
 def on_message():
     body = request.json
 
-    if body['type'] == HEART_BEAT:
+    if body['type'] == MSGType.HEART_BEAT:
         return {}
 
     channel_id = body.get('id2')

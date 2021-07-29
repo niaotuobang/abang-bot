@@ -2,21 +2,23 @@ import traceback
 import requests
 import datetime
 
-HEART_BEAT = 5005
-RECV_TXT_MSG = 1
-RECV_PIC_MSG = 3
-USER_LIST = 5000
-GET_USER_LIST_SUCCSESS = 5001
-GET_USER_LIST_FAIL = 5002
-TXT_MSG = 555
-PIC_MSG = 500
-AT_MSG = 550
-CHATROOM_MEMBER = 5010
-CHATROOM_MEMBER_NICK = 5020
-PERSONAL_INFO = 6500
-DEBUG_SWITCH = 6000
-PERSONAL_DETAIL = 6550
-ATTATCH_FILE = 5003
+
+class MSGType:
+    HEART_BEAT = 5005
+    RECV_TXT_MSG = 1
+    RECV_PIC_MSG = 3
+    USER_LIST = 5000
+    GET_USER_LIST_SUCCSESS = 5001
+    GET_USER_LIST_FAIL = 5002
+    TXT_MSG = 555
+    PIC_MSG = 500
+    AT_MSG = 550
+    CHATROOM_MEMBER = 5010
+    CHATROOM_MEMBER_NICK = 5020
+    PERSONAL_INFO = 6500
+    DEBUG_SWITCH = 6000
+    PERSONAL_DETAIL = 6550
+    ATTATCH_FILE = 5003
 
 
 class WechatBot:
@@ -56,7 +58,7 @@ class WechatBot:
         """
         uri = 'api/sendatmsg'
         data = {
-            'type': AT_MSG,
+            'type': MSGType.AT_MSG,
             'roomid': room_id,
             'content': content,
             'wxid': wx_id,
@@ -73,7 +75,7 @@ class WechatBot:
         """
         uri = 'api/sendpic'
         data = {
-            'type': PIC_MSG,
+            'type': MSGType.PIC_MSG,
             'wxid': to,
             'content': path
         }
@@ -86,7 +88,7 @@ class WechatBot:
         """
         uri = 'api/getmemberid'
         data = {
-            'type': CHATROOM_MEMBER,
+            'type': MSGType.CHATROOM_MEMBER,
             'content': 'op:list member'
         }
         return self.send(uri, data)
@@ -98,7 +100,7 @@ class WechatBot:
         """
         uri = 'api/getcontactlist'
         data = {
-            'type': USER_LIST,
+            'type': MSGType.USER_LIST,
         }
         return self.send(uri, data)
 
@@ -111,7 +113,7 @@ class WechatBot:
         """
         uri = 'api/getmembernick'
         data = {
-            'type': CHATROOM_MEMBER_NICK,
+            'type': MSGType.CHATROOM_MEMBER_NICK,
             'wxid': wx_id,
             'roomid': room_id
         }
@@ -124,7 +126,7 @@ class WechatBot:
         """
         uri = 'api/get_charroom_member_list'
         data = {
-            'type': CHATROOM_MEMBER,
+            'type': MSGType.CHATROOM_MEMBER,
         }
         return self.send(uri, data)
 
@@ -137,7 +139,7 @@ class WechatBot:
         """
         uri = 'api/sendtxtmsg'
         data = {
-            'type': TXT_MSG,
+            'type': MSGType.TXT_MSG,
             'wxid': to,
             'content': content
         }
@@ -152,7 +154,7 @@ class WechatBot:
         """
         uri = 'api/sendattatch'
         data = {
-            'type': ATTATCH_FILE,
+            'type': MSGType.ATTATCH_FILE,
             'wxid': to,
             'content': path
         }
@@ -165,7 +167,7 @@ class WechatBot:
         """
         uri = 'api/get_personal_info'
         data = {
-            'type': PERSONAL_INFO
+            'type': MSGType.PERSONAL_INFO
         }
         return self.send(uri, data)
 
