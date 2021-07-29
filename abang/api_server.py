@@ -1,7 +1,6 @@
 # FUCK windows
 import _locale
-_locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8'])
-
+_locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 
 import time
 from collections import defaultdict
@@ -23,10 +22,23 @@ app = Flask(__name__)
 class TinyApp(object):
     active = False
 
+    MESSAGE_TYPES = (RECV_TXT_MSG, )
+
     START_WORDS = ()
     STOP_WORDS = ()
 
     wechat_bot = WechatBot()
+
+    def __init__(self):
+        self.ctx = None
+
+    def set_ctx(self, ctx):
+        self.ctx = ctx
+
+    def need_handle(self, body):
+        if body.get('type') in self.MESSAGE_TYPES:
+            return True
+        return False
 
     def check_active(self, body):
         content = body['content']
@@ -302,7 +314,37 @@ class ChengyuLoong(TinyApp):
             self.send_one_case(new_word, body)
 
 
-channel_config = {}
+class ChannelContext(object):
+
+    wechat_bot = WechatBot()
+
+    def __init__(self, channel_id, apps=None):
+        self.channel_id = channel_id
+        self.apps = apps or []
+
+    def get_nick(self, user_id):
+        # TODO: add cache
+        pass
+
+
+# use as db
+channel_db = {}
+
+
+def get_channel_ctx(channel_id):
+    if channel_id in channel_db:
+        return channel_db[channel_id]
+
+    # 默认开启全部功能
+    apps = [Repeat(), Hello(), EmojiChengyu(), ChengyuLoong()]
+    ctx = ChannelContext(
+        channel_id=channel_id,
+        apps=apps)
+    for app in apps:
+        app.set_ctx(ctx)
+
+    channel_db[channel_id] = ctx
+    return ctx
 
 
 @app.route('/on_message', methods=['GET', 'POST'])
@@ -312,16 +354,13 @@ def on_message():
     if body['type'] == HEART_BEAT:
         return {}
 
-    if 'id2' not in body:
+    channel_id = body.get('id2')
+    if not channel_id:
         return {}
 
-    channel_id = body['id2']
-    if channel_id not in channel_config:
-        channel_config[channel_id] = {'apps': [Repeat(), Hello(), EmojiChengyu(), ChengyuLoong()]}
-
-    config = channel_config[channel_id]
-    if body['type'] == RECV_TXT_MSG:
-        for app in config['apps']:
+    ctx = get_channel_ctx(channel_id)
+    for app in ctx.app:
+        if app.need_handle(body):
             app.check_active(body)
             app.check_next(body)
 
