@@ -73,7 +73,7 @@ class TinyApp(object):
 
 
 class Hello(TinyApp):
-    START_WORDS = ('阿邦', '毛毛')
+    START_WORDS = ('阿邦', '毛毛', '阿邦你好')
 
     def on_next(self, body):
         self.wechat_bot.send_txt_msg(to=body['id2'], content=u'让我来邦你')
@@ -82,7 +82,7 @@ class Hello(TinyApp):
 
 class Repeat(TinyApp):
 
-    START_WORDS = ('开始复读',)
+    START_WORDS = ('开始复读', '阿邦复读')
     STOP_WORDS = ('结束复读',)
 
     def on_next(self, body):
@@ -90,7 +90,7 @@ class Repeat(TinyApp):
 
 
 class EmojiChengyu(TinyApp):
-    START_WORDS = ('开始表情猜成语',)
+    START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语')
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
     def on_app_start(self, body):
@@ -182,7 +182,7 @@ class EmojiChengyu(TinyApp):
 
 class ChengyuLoong(TinyApp):
 
-    START_WORDS = ('开始成语接龙',)
+    START_WORDS = ('开始成语接龙', '阿邦成语接龙', '阿邦接龙', '阿邦开始成语接龙')
     STOP_WORDS = ('结束游戏', '结束成语接龙')
 
     def on_app_start(self, body):
