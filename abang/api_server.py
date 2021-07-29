@@ -358,7 +358,7 @@ def on_message():
         return {}
 
     ctx = get_channel_ctx(channel_id)
-    for app in ctx.app:
+    for app in ctx.apps:
         if app.need_handle(body):
             app.check_active(body)
             app.check_next(body)
