@@ -2,6 +2,7 @@
 import _locale
 _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 
+import json
 import time
 from collections import defaultdict
 from random import choice
@@ -337,7 +338,11 @@ class ChannelContext(object):
     @cached(cache=TTLCache(maxsize=500, ttl=86400))
     def get_member_nick(self, wx_id):
         resp = self.wechat_bot.get_member_nick(wx_id, self.channel_id)
-        return resp['content']['nickname']
+        print("resp: ", resp)
+        content = resp['content']
+        print("content: ", content)
+        content_json = json.loads(content)
+        return content_json['nickname']
 
 
 # use as db
