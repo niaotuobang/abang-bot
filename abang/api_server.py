@@ -2,7 +2,6 @@
 import _locale
 _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 
-import logging
 import time
 from collections import defaultdict
 from random import choice
@@ -19,9 +18,6 @@ from wx_sdk import MSGType
 
 
 app = Flask(__name__)
-
-
-logger = logging.getLogger('')
 
 
 class TinyApp(object):
@@ -85,10 +81,11 @@ class Hello(TinyApp):
         # TODO: set to ctx
         if sender_id != self.ctx.channel_id:
             nickname = self.ctx.get_member_nick(sender_id)
+            print("nickname: ", nickname, sender_id)
             self.wechat_bot.send_at_msg(
                 wx_id=sender_id,
                 room_id=self.ctx.channel_id,
-                content='@{} 让我来邦你'.format(nickname),
+                content='nick: {} 让我来邦你'.format(nickname),
                 nickname=nickname)
         else:
             self.wechat_bot.send_txt_msg(to=self.ctx.channel_id, content=u'让我来邦你')
@@ -364,7 +361,7 @@ def get_channel_ctx(channel_id):
 @app.route('/on_message', methods=['GET', 'POST'])
 def on_message():
     body = request.json
-    logger.info(body)
+    print("body: ", body)
 
     if body['type'] == MSGType.HEART_BEAT:
         return {}
