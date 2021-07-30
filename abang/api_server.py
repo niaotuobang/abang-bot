@@ -85,7 +85,7 @@ class Hello(TinyApp):
             self.wechat_bot.send_at_msg(
                 wx_id=sender_id,
                 room_id=self.ctx.channel_id,
-                content='nick: {} 让我来邦你'.format(nickname),
+                content='让我来邦你'.format(nickname),
                 nickname=nickname)
         else:
             self.wechat_bot.send_txt_msg(to=self.ctx.channel_id, content=u'让我来邦你')
@@ -336,7 +336,8 @@ class ChannelContext(object):
 
     @cached(cache=TTLCache(maxsize=500, ttl=86400))
     def get_member_nick(self, wx_id):
-        return self.wechat_bot.get_member_nick(wx_id, self.channel_id)
+        resp = self.wechat_bot.get_member_nick(wx_id, self.channel_id)
+        return resp['content']['nickname']
 
 
 # use as db
