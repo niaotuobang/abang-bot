@@ -117,8 +117,8 @@ class EmojiChengyu(TinyApp):
         self.game['index'] = 0
         self.make_more_item()
 
-        first_content = '最多{}个题目,每次问题20秒后提示1个字(也可发送"提示"触发), ' + \
-            '45秒后公布答案(也可发送"我要答案"触发)'.format(len(self.game['items']))
+        first_content = '最多{}个题目,每次问题20秒后提示1个字(也可发送"提示"触发), 45秒后公布答案(也可发送"我要答案"触发)'.format(
+            len(self.game['items']))
         self.wechat_bot.send_txt_msg(
             to=message.channel_id,
             content=first_content)
