@@ -342,7 +342,7 @@ class ChannelContext(object):
         content = resp['content']
         print("content: ", content)
         content_json = json.loads(content)
-        return content_json['nickname']
+        return content_json['nick']
 
 
 # use as db
