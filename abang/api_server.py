@@ -37,111 +37,129 @@ class TinyApp(object):
     def set_ctx(self, ctx):
         self.ctx = ctx
 
-    def need_handle(self, body):
-        if body.get('type') in self.MESSAGE_TYPES:
+    def need_handle(self, message):
+        if message.msg_type in self.MESSAGE_TYPES:
             return True
         return False
 
-    def check_active(self, body):
-        content = body['content']
-        if content in self.START_WORDS:
-            self.set_active(True, body)
-        elif content in self.STOP_WORDS:
-            self.set_active(False, body)
+    def check_active(self, message):
+        if message.content in self.START_WORDS:
+            self.set_active(True, message)
+        elif message.content in self.STOP_WORDS:
+            self.set_active(False, message)
 
-    def set_active(self, active, body):
+    def set_active(self, active, message):
         if self.active == active:
             return
 
         print(self.__class__.__name__, ' self.active, active ', self.active, active)
         self.active = active
         if self.active:
-            self.on_app_start(body)
+            self.on_app_start(message)
         else:
-            self.on_app_stop(body)
+            self.on_app_stop(message)
 
-    def on_app_start(self, body):
+    def on_app_start(self, message):
         pass
 
-    def on_app_stop(self, body):
+    def on_app_stop(self, message):
         pass
 
-    def check_next(self, body):
+    def check_next(self, message):
         if self.active:
-            self.on_next(body)
+            self.on_next(message)
 
-    def on_next(self, body):
+    def on_next(self, message):
         pass
 
 
 class Hello(TinyApp):
-    START_WORDS = ('阿邦', '毛毛', '阿邦你好')
+    START_WORDS = ('阿邦', '毛毛', '阿邦你好', '邦邦')
 
-    def on_next(self, body):
-        sender_id = body['id1']
-        # TODO: set to ctx
-        if sender_id != self.ctx.channel_id:
-            nickname = self.ctx.get_member_nick(sender_id)
-            print("nickname: ", nickname, sender_id)
+    def on_next(self, message):
+        reply_content = '让我来邦你'
+        if message.is_group:
+            nickname = self.ctx.get_member_nick(message.sender_id)
             self.wechat_bot.send_at_msg(
-                wx_id=sender_id,
-                room_id=self.ctx.channel_id,
-                content='让我来邦你'.format(nickname),
+                wx_id=message.sender_id,
+                room_id=message.channel_id,
+                content=reply_content,
                 nickname=nickname)
         else:
-            self.wechat_bot.send_txt_msg(to=self.ctx.channel_id, content=u'让我来邦你')
-        self.set_active(False, body)
+            self.wechat_bot.send_txt_msg(
+                to=message.channel_id,
+                content=reply_content)
+
+        self.set_active(False, message)
 
 
 class Repeat(TinyApp):
 
-    START_WORDS = ('开始复读', '阿邦复读')
-    STOP_WORDS = ('结束复读',)
+    START_WORDS = ('开始复读', '阿邦复读', '阿邦开始复读')
+    STOP_WORDS = ('结束复读', '别复读了')
 
-    def on_next(self, body):
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=body['content'])
+    def on_next(self, message):
+        self.wechat_bot.send_txt_msg(
+            to=message.channel_id,
+            content=message.content)
 
 
 class EmojiChengyu(TinyApp):
     START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语')
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
-    def on_app_start(self, body):
+    def on_app_start(self, message):
         self.game = {}
         self.game['winner'] = defaultdict(int)
         self.game['items'] = []
         self.game['checked'] = []
         self.game['last'] = None
+        self.game['index'] = 0
         self.make_more_item()
 
         first_content = '最多{}个题目,每次问题20秒后提示1个字(也可发送"提示"触发), ' + \
             '45秒后公布答案(也可发送"我要答案"触发)'.format(len(self.game['items']))
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=first_content)
-        self.send_one_case(body)
+        self.wechat_bot.send_txt_msg(
+            to=message.channel_id,
+            content=first_content)
 
-    def on_app_stop(self, body):
+        self.send_one_case(message)
+
+    def on_app_stop(self, message):
         # TODO: send the winner
         self.game = {}
 
     def make_more_item(self):
-        N = 50
+        N = 60
         pairs = [gen_one_emoji_pair(search_count=500) for i in range(N)]
         pairs = filter(None, pairs)
         pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
         pairs = list(pairs)
         pairs.sort(key=lambda pair: pair['emojis'].count(None))
-        # TODO: 按文字去重
 
-        self.game['items'] = pairs[:30]
+        pairs2 = []
+        used_words = {}
+        for pair in pairs:
+            if pair['word'] not in used_words:
+                pairs2.append(pair)
+                used_words[pair['word']] = True
 
-    def send_one_case(self, body):
+        self.game['items'] = pairs2[:20]
+
+    def send_one_case(self, message):
         if len(self.game['items']) == 0:
             return False
 
         item = self.game['items'].pop(0)
+        self.game['index'] += 1
 
-        question = '题目({}个字): {}'.format(len(item['word']), item['emoji'])
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=question)
+        question = '第{} 题 ({}个字): {}'.format(
+            self.game['index'],
+            len(item['word']),
+            item['emoji'])
+
+        # TODO: 考虑 message 自带 reply 方法
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
         self.game['last'] = {
             'item': item,
             'create_time': time.time(),
@@ -151,46 +169,58 @@ class EmojiChengyu(TinyApp):
         print(item['word'], item['emoji'])
         return True
 
-    def check_one_case(self, body):
+    def check_one_case(self, message):
         if 'last' not in self.game:
             return False
+
+        content = message.content
 
         last_item = self.game['last']['item']
         last_create_time = self.game['last']['create_time']
 
-        content = body['content']
         answer = last_item['word']
-        if content != answer:
+        if message.content != answer:
             # timeout
             if time.time() - last_create_time >= 45 or content == '我要答案':
                 reply_content = '很遗憾, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
-                self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
+                self.wechat_bot.send_txt_msg(
+                    to=message.channel_id,
+                    content=reply_content)
                 return True
             # tip
             if not self.game['last']['tip']:
                 if time.time() - last_create_time >= 20 or content == '提示':
-                    tip_content = '答案提示 {}'.format(answer[0] + '*' + answer[2] + '*')
-                    self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
+                    # TODO: mark random
+                    reply_content = '答案提示 {}'.format(answer[0] + '*' + answer[2] + '*')
+                    self.wechat_bot.send_txt_msg(
+                        to=message.channel_id,
+                        content=reply_content)
                     self.game['last']['tip'] = True
                     return False
 
             return False
 
-        self.game['winner'][body['id1']] += 1
-        reply_content = '恭喜猜对了, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=reply_content)
+        self.game['winner'][message.sender_id] += 1
+        nickname = self.ctx.get_member_nick(message.sender_id)
+        reply_content = '恭喜@{} 猜对了, {} 的答案是 {}'.format(
+            nickname,
+            last_item['emoji'],
+            last_item['word'])
+        self.wechat_bot.send_txt_msg(
+            to=message.channel_id, content=reply_content)
         return True
 
-    def on_next(self, body):
+    def on_next(self, message):
         if not self.game.get('last'):
             return
-        success = self.check_one_case(body)
-        # 最后一个
-        if not self.game['items']:
-            self.set_active(False, body)
+        success = self.check_one_case(message)
+        if success and self.game['items']:
+            self.send_one_case(message)
             return
-        elif success:
-            self.send_one_case(body)
+
+        if not self.game['items']:
+            self.set_active(False, message)
+            return
 
 
 class ChengyuLoong(TinyApp):
@@ -198,7 +228,7 @@ class ChengyuLoong(TinyApp):
     START_WORDS = ('开始成语接龙', '阿邦成语接龙', '阿邦接龙', '阿邦开始成语接龙')
     STOP_WORDS = ('结束游戏', '结束成语接龙')
 
-    def on_app_start(self, body):
+    def on_app_start(self, message):
         self.game = {}
         self.game['winner'] = defaultdict(int)
         self.game['count'] = 0
@@ -206,14 +236,17 @@ class ChengyuLoong(TinyApp):
         self.game['history'] = []
 
         word = self.make_one_item()
-        self.send_one_case(word, body)
+        self.send_one_case(word, message)
 
-    def on_app_stop(self, body):
-        content = '已结束, 本次接龙长度 {} '.format(self.game['count'])
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
+    def on_app_stop(self, message):
+        reply_content = '已结束, 本次接龙长度 {} '.format(self.game['count'])
+        self.wechat_bot.send_txt_msg(
+            to=message.channel_id,
+            content=reply_content)
 
-        content = ' -> '.join(self.game['history'])
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=content)
+        reply_content = ' -> '.join(self.game['history'])
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        # TODO: send winner
 
     def make_one_item(self):
         items = ChengyuDataSource.chengyu_list[:ChengyuDataSource.common_chengyu_count]
@@ -221,10 +254,10 @@ class ChengyuLoong(TinyApp):
         item = choice(list(items))
         return item['word']
 
-    def send_one_case(self, word, body):
+    def send_one_case(self, word, message):
         index = self.game['count'] + 1
         question = '第 {} 条: 「{}」'.format(index, word)
-        self.wechat_bot.send_txt_msg(to=body['id2'], content=question)
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
 
         self.game['last'] = word
         self.game['count'] += 1
@@ -255,8 +288,8 @@ class ChengyuLoong(TinyApp):
             return True
         return False
 
-    def check_one_case(self, body):
-        new_word = body['content']
+    def check_one_case(self, message):
+        new_word = message.content
         word = self.game['last']
 
         # 控制逻辑
@@ -280,12 +313,12 @@ class ChengyuLoong(TinyApp):
 
                 tip_content = '提示: 「{}」'.format(''.join(tip_word_chars))
 
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
             return None, False
         # 排除已使用
         elif new_word in self.game['history']:
             tip_content = '成语「{}」已用过'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=tip_content)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
             return None, False
 
         # 严格检查
@@ -296,14 +329,15 @@ class ChengyuLoong(TinyApp):
                 ok = True
 
         if ok:
-            ok_content = '恭喜接龙成功 {}'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=ok_content)
+            nickname = self.ctx.get_member_nick(message.sender_id)
+            ok_content = '恭喜@{} 接龙成功 {}'.format(nickname, new_word)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=ok_content)
             return new_word, True
 
         # 补充疑问
         if len(new_word) == 4 and new_word not in ChengyuDataSource.chengyu_map:
             not_content = '没有查到「{}」这个成语'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=body['id2'], content=not_content)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=not_content)
             return None, False
 
         return None, False
@@ -321,10 +355,10 @@ class ChengyuLoong(TinyApp):
 
         return None
 
-    def on_next(self, body):
-        new_word, success = self.check_one_case(body)
+    def on_next(self, message):
+        new_word, success = self.check_one_case(message)
         if success:
-            self.send_one_case(new_word, body)
+            self.send_one_case(new_word, message)
 
 
 class ChannelContext(object):
@@ -343,6 +377,35 @@ class ChannelContext(object):
         print("content: ", content)
         content_json = json.loads(content)
         return content_json['nick']
+
+
+class Message(object):
+    def __init__(self, body):
+        self.body = body
+
+    @property
+    def content(self):
+        return self.body['content']
+
+    @property
+    def channel_id(self):
+        return self.body.get('id2')
+
+    @property
+    def sender_id(self):
+        return self.body['id1']
+
+    @property
+    def is_group(self):
+        return self.channel_id.endswith('@chatroom')
+
+    @property
+    def msg_type(self):
+        return self.body['type']
+
+    @property
+    def is_heartbeat(self):
+        return self.msg_type == MSGType.HEART_BEAT
 
 
 # use as db
@@ -368,19 +431,19 @@ def get_channel_ctx(channel_id):
 def on_message():
     body = request.json
     print("body: ", body)
+    message = Message(body)
 
-    if body['type'] == MSGType.HEART_BEAT:
+    if message.is_heartbeat:
         return {}
 
-    channel_id = body.get('id2')
-    if not channel_id:
+    if not message.channel_id:
         return {}
 
-    ctx = get_channel_ctx(channel_id)
+    ctx = get_channel_ctx(message.channel_id)
     for app in ctx.apps:
-        if app.need_handle(body):
-            app.check_active(body)
-            app.check_next(body)
+        if app.need_handle(message):
+            app.check_active(message)
+            app.check_next(message)
 
     return {}
 
