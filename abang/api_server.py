@@ -407,9 +407,7 @@ class ChannelContext(object):
     @cached(cache=TTLCache(maxsize=500, ttl=86400))
     def get_member_nick(self, wx_id):
         resp = self.wechat_bot.get_member_nick(wx_id, self.channel_id)
-        print("resp: ", resp)
         content = resp['content']
-        print("content: ", content)
         content_json = json.loads(content)
         return content_json['nick']
 
@@ -478,6 +476,8 @@ def on_message():
         return {}
 
     ctx = get_channel_ctx(message.channel_id)
+    message.set_ctx(ctx)
+
     for app in ctx.apps:
         if app.need_handle(message):
             app.check_active(message)
