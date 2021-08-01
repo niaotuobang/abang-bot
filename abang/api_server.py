@@ -5,6 +5,7 @@ _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 import json
 import time
 from collections import defaultdict
+from functools import cached_property
 from random import choice
 
 from cachetools import cached, TTLCache
@@ -26,6 +27,8 @@ class TinyApp(object):
 
     MESSAGE_TYPES = (MSGType.RECV_TXT_MSG, )
 
+    APP_NAME = None
+    APP_DESC = None
     START_WORDS = ()
     STOP_WORDS = ()
 
@@ -36,6 +39,18 @@ class TinyApp(object):
 
     def set_ctx(self, ctx):
         self.ctx = ctx
+
+    @cached_property
+    def play_desc(self):
+        if not self.APP_NAME:
+            return None
+
+        desc = f'''{self.APP_NAME} \n触发词: {'、'.join(self.START_WORDS)}'''
+        if self.STOP_WORDS:
+            desc += f'''\n结束词: {'、'.join(self.STOP_WORDS)}'''
+        if self.APP_DESC:
+            desc += f'\n{self.APP_DESC}'
+        return desc
 
     def need_handle(self, message):
         if message.msg_type in self.MESSAGE_TYPES:
@@ -74,6 +89,7 @@ class TinyApp(object):
 
 
 class Hello(TinyApp):
+    APP_NAME = '打招呼'
     START_WORDS = ('阿邦', '毛毛', '阿邦你好', '邦邦')
 
     def on_next(self, message):
@@ -95,6 +111,7 @@ class Hello(TinyApp):
 
 class Repeat(TinyApp):
 
+    APP_NAME = '复读机'
     START_WORDS = ('开始复读', '阿邦复读', '阿邦开始复读')
     STOP_WORDS = ('结束复读', '别复读了')
 
@@ -105,7 +122,8 @@ class Repeat(TinyApp):
 
 
 class EmojiChengyu(TinyApp):
-    START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语')
+    APP_NAME = '表情猜成语'
+    START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语', '开始抽象成语')
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
     def on_app_start(self, message):
@@ -224,7 +242,7 @@ class EmojiChengyu(TinyApp):
 
 
 class ChengyuLoong(TinyApp):
-
+    APP_NAME = '成语接龙'
     START_WORDS = ('开始成语接龙', '阿邦成语接龙', '阿邦接龙', '阿邦开始成语接龙')
     STOP_WORDS = ('结束游戏', '结束成语接龙')
 
@@ -361,6 +379,23 @@ class ChengyuLoong(TinyApp):
             self.send_one_case(new_word, message)
 
 
+class GameTips(TinyApp):
+    APP_NAME = '玩法说明'
+    START_WORDS = ('阿邦玩法', '阿邦游戏', '阿邦游戏介绍')
+
+    def on_next(self, message):
+        play_descs = [app.play_desc for app in self.ctx.apps]
+        reply_content = '\n'.join([
+            f'{i}. {desc}'
+            for i, desc in enumerate(filter(None, play_descs))
+        ])
+
+        self.wechat_bot.send_txt_msg(
+            to=message.channel_id,
+            content=reply_content)
+        self.set_active(False, message)
+
+
 class ChannelContext(object):
 
     wechat_bot = WechatBot()
@@ -382,6 +417,10 @@ class ChannelContext(object):
 class Message(object):
     def __init__(self, body):
         self.body = body
+        self.ctx = None
+
+    def set_ctx(self, ctx):
+        self.ctx = ctx
 
     @property
     def content(self):
@@ -416,8 +455,7 @@ def get_channel_ctx(channel_id):
     if channel_id in channel_db:
         return channel_db[channel_id]
 
-    # 默认开启全部功能
-    apps = [Repeat(), Hello(), EmojiChengyu(), ChengyuLoong()]
+    apps = [Hello(), GameTips(), Repeat(), EmojiChengyu(), ChengyuLoong()]
 
     ctx = ChannelContext(channel_id=channel_id, apps=apps)
     for app in apps:
