@@ -385,7 +385,7 @@ class GameTips(TinyApp):
 
     def on_next(self, message):
         play_descs = [app.play_desc for app in self.ctx.apps]
-        reply_content = '\n'.join([
+        reply_content = '\n-----------------\n'.join([
             f'{i}. {desc}'
             for i, desc in enumerate(filter(None, play_descs))
         ])
