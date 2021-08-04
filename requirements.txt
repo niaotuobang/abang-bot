@@ -3,3 +3,4 @@ emoji-chengyu
 flask
 requests
 cachetools
+pypinyin
