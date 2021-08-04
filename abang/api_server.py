@@ -554,7 +554,14 @@ def get_channel_ctx(channel_id):
     if channel_id in channel_db:
         return channel_db[channel_id]
 
-    apps = [Hello(), GameTips(), Repeat(), EmojiChengyu(), ChengyuLoong()]
+    apps = [
+        Hello(),
+        GameTips(),
+        Repeat(),
+        EmojiChengyu(),
+        ChengyuLoong(),
+        HumanWuGong(),
+    ]
 
     ctx = ChannelContext(channel_id=channel_id, apps=apps)
     for app in apps:
