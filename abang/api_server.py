@@ -306,24 +306,29 @@ class ChengyuLoong(TinyApp):
         question = '第 {} 条: 「{}」'.format(index, word)
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
 
-    def check_match(self, message, new_word=None):
-        if new_word is None:
-            new_word = message.content
+    def is_match(self, old_word, new_word):
         if len(new_word) < 3:
             return False
-
-        old_word = self.game['last']
         equal = is_pinyin_equal(old_word[-1], new_word[0])
         if not equal:
+            return False
+
+        is_chengyu = ChengyuDataSource.chengyu_map.get(new_word)
+        if not is_chengyu:
+            return False
+
+        return True
+
+    def check_match(self, message):
+        old_word = self.game['last']
+        new_word = message.content
+
+        if not self.is_match(old_word, new_word):
             return False
 
         if new_word in self.game['history']:
             tip_content = '「{}」已用过'.format(new_word)
             self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
-            return False
-
-        new_item = ChengyuDataSource.chengyu_map.get(new_word)
-        if not new_item:
             return False
 
         return True
@@ -339,8 +344,10 @@ class ChengyuLoong(TinyApp):
     def find_tip_word(self, old_word):
         tip_words = []
         for tip_word in ChengyuDataSource.chengyu_map:
-            if self.check_match(tip_word, old_word):
-                tip_words.append(tip_word)
+            if self.is_match(old_word, tip_word):
+                if tip_word not in self.game['history']:
+                    tip_words.append(tip_word)
+
             if len(tip_words) > 15:
                 break
 
@@ -386,19 +393,10 @@ class HumanWuGong(ChengyuLoong):
     THIS_QUESTION = '当前接龙'
     APP_DESC = f'输入 {THIS_QUESTION} 显示正在接龙的词'
 
-    def check_match(self, message):
-        new_word = message.content
-        if len(new_word) < 3:
-            return False
-
+    def is_match(self, old_word, new_word):
         old_word = self.game['last']
         equal = is_pinyin_equal(old_word[-1], new_word[0])
         if not equal:
-            return False
-
-        if new_word in self.game['history']:
-            tip_content = '「{}」已用过'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
             return False
         return True
 
