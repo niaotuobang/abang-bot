@@ -155,8 +155,8 @@ class WinnerMixin(object):
         contents = []
         counter = Counter(winner)
         for index, item in enumerate(counter.most_common(3)):
-            winner_id = item.keys()[0]
-            count = item[winner_id]
+            winner_id = item[0]
+            count = item[1]
             nickname = self.ctx.get_member_nick(winner_id)
             content = f'{medals[index]} 第 {index} 名: @{nickname} (赢了 {count} 次)'
             contents.append(content)
