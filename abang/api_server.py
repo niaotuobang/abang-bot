@@ -5,6 +5,7 @@ _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 import json
 import time
 from collections import defaultdict
+from collections import Counter
 from functools import cached_property
 import random
 from random import choice
@@ -146,14 +147,32 @@ class Repeat(TinyApp):
             content=message.content)
 
 
-class EmojiChengyu(TinyApp):
+class WinnerMixin(object):
+
+    def make_winner_content(self, winner):
+        medals = ['🏅', '🥈', '🥉']
+
+        contents = []
+        counter = Counter(winner)
+        for index, item in enumerate(counter.most_common(3)):
+            winner_id = item.keys()[0]
+            count = item[winner_id]
+            nickname = self.ctx.get_member_nick(winner_id)
+            content = f'{medals[index]} 第 {index} 名: @{nickname} (赢了 {count} 次)'
+            contents.append(content)
+
+        reply_content = ''.join(contents)
+        return reply_content
+
+
+class EmojiChengyu(TinyApp, WinnerMixin):
     APP_NAME = '表情猜成语'
     START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语', '开始抽象成语')
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
     def on_app_start(self, message):
         self.game = {}
-        self.game['winner'] = defaultdict(int)
+        self.game['winner'] = defaultdict(int)  # TODO: 考虑设置到 winner 中
         self.game['items'] = []
         self.game['checked'] = []
         self.game['last'] = None
@@ -169,7 +188,9 @@ class EmojiChengyu(TinyApp):
         self.send_one_case(message)
 
     def on_app_stop(self, message):
-        # TODO: send the winner
+        reply_content = self.make_winner_content(self.game['winner'])
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
         self.game = {}
 
     def make_more_item(self):
@@ -266,7 +287,7 @@ class EmojiChengyu(TinyApp):
             return
 
 
-class ChengyuLoong(TinyApp):
+class ChengyuLoong(TinyApp, WinnerMixin):
     APP_NAME = '成语接龙'
     START_WORDS = ('开始成语接龙', '阿邦成语接龙', '阿邦接龙', '阿邦开始成语接龙')
     STOP_WORDS = ('结束游戏', '结束成语接龙')
@@ -289,7 +310,9 @@ class ChengyuLoong(TinyApp):
 
         reply_content = ' -> '.join(self.game['history'])
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
-        # TODO: send winner
+
+        reply_content = self.make_winner_content(self.game['winner'])
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
     def send_one_case(self, word, message):
         index = self.game['count'] + 1
