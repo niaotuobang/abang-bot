@@ -6,6 +6,7 @@ import json
 import time
 from collections import defaultdict
 from functools import cached_property
+import random
 from random import choice
 
 from cachetools import cached, TTLCache
@@ -269,161 +270,21 @@ class ChengyuLoong(TinyApp):
     APP_NAME = '成语接龙'
     START_WORDS = ('开始成语接龙', '阿邦成语接龙', '阿邦接龙', '阿邦开始成语接龙')
     STOP_WORDS = ('结束游戏', '结束成语接龙')
-
-    def on_app_start(self, message):
-        self.game = {}
-        self.game['winner'] = defaultdict(int)
-        self.game['count'] = 0
-        self.game['simple'] = False
-        self.game['history'] = []
-
-        word = self.make_one_item()
-        self.send_one_case(word, message)
-
-    def on_app_stop(self, message):
-        reply_content = '已结束, 本次接龙长度 {} '.format(self.game['count'])
-        self.wechat_bot.send_txt_msg(
-            to=message.channel_id,
-            content=reply_content)
-
-        reply_content = ' -> '.join(self.game['history'])
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
-        # TODO: send winner
-
-    def make_one_item(self):
-        items = ChengyuDataSource.chengyu_list[:ChengyuDataSource.common_chengyu_count]
-        items = filter(lambda item: len(item['words']) == 4, items)
-        item = choice(list(items))
-        return item['word']
-
-    def send_one_case(self, word, message):
-        index = self.game['count'] + 1
-        question = '第 {} 条: 「{}」'.format(index, word)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
-
-        self.game['last'] = word
-        self.game['count'] += 1
-        self.game['history'].append(word)
-
-    def check_two_word(self, new_word, word):
-        if not new_word or len(new_word) != 4:
-            return False
-
-        new_item = ChengyuDataSource.chengyu_map.get(new_word)
-        item = ChengyuDataSource.chengyu_map.get(word)
-        if not new_item or not item:
-            return False
-
-        if new_word[0] == word[-1]:
-            return True
-
-        first_pinyin = new_item['pinyins'][0]
-        last_pinyin = item['pinyins'][-1]
-
-        if first_pinyin == last_pinyin:
-            return True
-
-        first_pinyin = ChengyuDataSource.clean_tone(first_pinyin)
-        last_pinyin = ChengyuDataSource.clean_tone(last_pinyin)
-
-        if first_pinyin == last_pinyin:
-            return True
-        return False
-
-    def check_one_case(self, message):
-        new_word = message.content
-        word = self.game['last']
-
-        # 控制逻辑
-        if new_word == '简单模式':
-            self.game['simple'] = True
-            return None, False
-        elif new_word == '关闭简单模式':
-            self.game['simple'] = False
-            return None, False
-        # 提示逻辑
-        elif new_word == '提示':
-            tip_word = self.find_tip_word(word)
-            if not tip_word:
-                tip_content = '未找到可用成语'
-            else:
-                tip_index = choice([1, 2, 3])
-                tip_word_chars = list(tip_word)
-                for i in range(len(tip_word_chars)):
-                    if i not in (0, tip_index):
-                        tip_word_chars[i] = ' * '
-
-                tip_content = '提示: 「{}」'.format(''.join(tip_word_chars))
-
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
-            return None, False
-        # 排除已使用
-        elif new_word in self.game['history']:
-            tip_content = '成语「{}」已用过'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
-            return None, False
-
-        # 严格检查
-        ok = self.check_two_word(new_word, word)
-        # 补充简单模式
-        if not ok and self.game['simple']:
-            if len(new_word) >= 3 and new_word[0] == word[-1]:
-                ok = True
-
-        if ok:
-            nickname = self.ctx.get_member_nick(message.sender_id)
-            ok_content = '恭喜@{} 接龙成功 {}'.format(nickname, new_word)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=ok_content)
-            return new_word, True
-
-        # 补充疑问
-        if len(new_word) == 4 and new_word not in ChengyuDataSource.chengyu_map:
-            not_content = '没有查到「{}」这个成语'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=not_content)
-            return None, False
-
-        return None, False
-
-    def find_tip_word(self, word):
-        tip_words = []
-        for tip_word in ChengyuDataSource.chengyu_map:
-            if self.check_two_word(tip_word, word):
-                tip_words.append(tip_word)
-            if len(tip_words) > 15:
-                break
-
-        if tip_words:
-            return choice(tip_words)
-
-        return None
-
-    def on_next(self, message):
-        new_word, success = self.check_one_case(message)
-        if success:
-            self.send_one_case(new_word, message)
-
-
-class HumanWuGong(TinyApp):
-    APP_NAME = '俗语接龙(人体蜈蚣)'
-    START_WORDS = ('开始俗语接龙', '开始人体蜈蚣')
-    STOP_WORDS = ('结束游戏', '结束俗语接龙', '结束人体蜈蚣')
-
+    TIPS = '提示'
     THIS_QUESTION = '当前接龙'
-    APP_DESC = f'输入 {THIS_QUESTION} 显示正在接龙的词'
+    APP_DESC = f'输入 {TIPS} 可提示,输入 {THIS_QUESTION} 显示正在接龙的词'
 
     def on_app_start(self, message):
         self.game = {}
         self.game['winner'] = defaultdict(int)
         self.game['count'] = 0
-        self.game['simple'] = False
         self.game['history'] = []
 
-        # init
         new_word = choice_common_chengyu()
         self.send_one_case(new_word, message)
 
     def on_app_stop(self, message):
-        reply_content = '已结束, 本次接龙长度 {} '.format(self.game['count'])
+        reply_content = '已结束, 本次接龙长度 {}'.format(self.game['count'])
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
         reply_content = ' -> '.join(self.game['history'])
@@ -445,6 +306,86 @@ class HumanWuGong(TinyApp):
         question = '第 {} 条: 「{}」'.format(index, word)
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
 
+    def check_match(self, message, new_word=None):
+        if new_word is None:
+            new_word = message.content
+        if len(new_word) < 3:
+            return False
+
+        old_word = self.game['last']
+        equal = is_pinyin_equal(old_word[-1], new_word[0])
+        if not equal:
+            return False
+
+        if new_word in self.game['history']:
+            tip_content = '「{}」已用过'.format(new_word)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
+            return False
+
+        new_item = ChengyuDataSource.chengyu_map.get(new_word)
+        if not new_item:
+            return False
+
+        return True
+
+    def on_matched(self, message):
+        # 统计
+        self.game['winner'][message.sender_id] += 1
+
+        nickname = self.ctx.get_member_nick(message.sender_id)
+        reply_content = '恭喜@{} 接龙成功 {}'.format(nickname, message.content)
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
+    def find_tip_word(self, old_word):
+        tip_words = []
+        for tip_word in ChengyuDataSource.chengyu_map:
+            if self.check_match(tip_word, old_word):
+                tip_words.append(tip_word)
+            if len(tip_words) > 15:
+                break
+
+        if not tip_words:
+            return None
+        return choice(tip_words)
+
+    def send_tip_word(self, message):
+        old_word = self.game['last']
+        tip_word = self.find_tip_word(old_word)
+        if tip_word:
+            keys = list(tip_word)
+            mask_indexes = random.sample([1, 2, 3], 2)
+            for i in range(len(keys)):
+                if i in mask_indexes:
+                    keys[i] = ' * '
+
+            tip_content = f"提示: 「{''.join(keys)}」"
+        else:
+            tip_content = '未找到可用成语'
+
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
+
+    def on_next(self, message):
+        content = message.content
+        if content == self.THIS_QUESTION:
+            self.resend_case(message)
+            return
+        elif content == self.TIPS:
+            self.send_tip_word(message)
+            return
+        else:
+            if self.check_match(message):
+                self.on_matched(message)
+                self.send_one_case(content, message)
+
+
+class HumanWuGong(ChengyuLoong):
+    APP_NAME = '俗语接龙(人体蜈蚣)'
+    START_WORDS = ('开始俗语接龙', '开始人体蜈蚣')
+    STOP_WORDS = ('结束游戏', '结束俗语接龙', '结束人体蜈蚣')
+
+    THIS_QUESTION = '当前接龙'
+    APP_DESC = f'输入 {THIS_QUESTION} 显示正在接龙的词'
+
     def check_match(self, message):
         new_word = message.content
         if len(new_word) < 3:
@@ -460,14 +401,6 @@ class HumanWuGong(TinyApp):
             self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
             return False
         return True
-
-    def on_matched(self, message):
-        # 统计
-        self.game['winner'][message.sender_id] += 1
-
-        nickname = self.ctx.get_member_nick(message.sender_id)
-        reply_content = '恭喜@{} 接龙成功 {}'.format(nickname, message.content)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
     def on_next(self, message):
         content = message.content
