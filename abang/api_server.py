@@ -153,14 +153,14 @@ class NaiveRepeat(TinyApp):
     def on_next(self, message):
         content = message.content
         if message.content in self.MODES:
-            self.mode = content
+            self.game['mode'] = content
             return
-        if self.mode == '弱智复读':
+        if self.game['mode'] == '弱智复读':
             self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
-        elif self.mode == '随机复读':
+        elif self.game['mode'] == '随机复读':
             if random.random() < self.RANDOM_RATIO:
                 self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
-        elif self.mode == '智能复读':
+        elif self.game['mode'] == '智能复读':
             self.game['history'].append(content)
             if self.game['history'].count(content) > 1:
                 self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
