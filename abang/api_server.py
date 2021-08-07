@@ -135,16 +135,36 @@ class Hello(TinyApp):
         self.set_active(False, message)
 
 
-class Repeat(TinyApp):
+class NaiveRepeat(TinyApp):
 
     APP_NAME = '复读机'
     START_WORDS = ('开始复读', '阿邦复读', '阿邦开始复读')
     STOP_WORDS = ('结束复读', '别复读了')
+    MODES = ('弱智复读', '随机复读', '智能复读')
+    APP_DESC = f"输入 {'、'.join(MODES)} 切换模式"
+    RANDOM_RATIO = 0.1
+    HISTORY_CONTENT_LEN = 10
+
+    def on_app_start(self, message):
+        self.game = {}
+        self.game['history'] = []
+        self.game['mode'] = self.MODES[0]
 
     def on_next(self, message):
-        self.wechat_bot.send_txt_msg(
-            to=message.channel_id,
-            content=message.content)
+        content = message.content
+        if message.content in self.MODES:
+            self.mode = content
+            return
+        if self.mode == '弱智复读':
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
+        elif self.mode == '随机复读':
+            if random.random() < self.RANDOM_RATIO:
+                self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
+        elif self.mode == '智能复读':
+            self.game['history'].append(content)
+            if self.game['history'].count(content) > 1:
+                self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
+            self.game['history'] = self.game['history'][-self.HISTORY_CONTENT_LEN:]
 
 
 class WinnerMixin(object):
@@ -511,7 +531,7 @@ def get_channel_ctx(channel_id):
     apps = [
         Hello(),
         GameTips(),
-        Repeat(),
+        NaiveRepeat(),
         EmojiChengyu(),
         ChengyuLoong(),
         HumanWuGong(),
