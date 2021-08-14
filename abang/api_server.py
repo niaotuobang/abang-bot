@@ -508,7 +508,8 @@ class SevenSeven(TinyApp):
 
     def get_winner_content(self, winner_id):
         if winner_id not in self.game['winner']:
-            return
+            return None
+
         gift = self.game['winner'][winner_id]
         giver_id, gift_content = gift
         winner = self.ctx.get_member_nick(winner_id)
@@ -527,7 +528,7 @@ class SevenSeven(TinyApp):
             return
 
         giver_id = choice(current_member_ids)
-        self.game[message.sender_id] = (giver_id, gift_content)
+        self.game['winner'][message.sender_id] = (giver_id, gift_content)
         reply_content = '恭喜 ' + self.get_winner_content(message.sender_id)
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
         return
