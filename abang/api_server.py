@@ -489,7 +489,7 @@ class SevenSeven(TinyApp):
     def on_app_start(self, message):
         self.game = {}
 
-        reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王)领一杯蜜雪冰城。\n-----------------\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
+        reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王文君)领一杯蜜雪冰城。\n- - - - - - - - - - - -\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
         self.game['member_ids'] = self.ctx.get_channel_member_ids()
@@ -498,7 +498,7 @@ class SevenSeven(TinyApp):
         self.game['winner'] = {}
 
     def on_app_stop(self, message):
-        reply_contents = ['抽奖结果公示', '---------------']
+        reply_contents = ['抽奖结果公示', f'共{len(self.game["winner"])}人抽中', '- - - - - - - - - - - -']
         for winner_id in self.game['winner']:
             reply_contents.append(self.get_winner_content(winner_id))
         reply_content = '\n'.join(reply_contents)
@@ -540,6 +540,7 @@ class SevenSeven(TinyApp):
         return
 
     def on_next(self, message):
+        content = message.content
         if content == self.GIFT_WORD:
             self.check_new_case(message, '奶茶')
             return
