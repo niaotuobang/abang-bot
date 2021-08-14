@@ -476,8 +476,8 @@ class GameTips(TinyApp):
 
 class SevenSeven(TinyApp):
     APP_NAME = '七夕限定抽奖活动'
-    START_WORDS = ('七夕抽奖活动开始')
-    STOP_WORDS = ('七夕抽奖活动正式结束')
+    START_WORDS = ('七夕抽奖活动开始',)
+    STOP_WORDS = ('七夕抽奖活动正式结束',)
     GIFT_REGEX = re.compile(r'七夕抽奖我要一杯(\w+)奶茶')
 
     def check_active(self, message):
