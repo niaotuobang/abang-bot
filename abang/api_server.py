@@ -486,7 +486,9 @@ class SevenSeven(TinyApp):
         super().check_active(message)
 
     def on_app_start(self, message):
-        reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王)领一杯蜜雪冰城。\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
+        self.game = {}
+
+        reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王)领一杯蜜雪冰城。\n-----------------\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
         self.game['member_ids'] = self.ctx.get_channel_member_ids()
