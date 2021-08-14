@@ -536,19 +536,22 @@ class SevenSeven(TinyApp):
             self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
             return
 
-        current_member_ids = [x for x in self.game['member_ids']]
-        if message.sender_id in current_member_ids:
-            current_member_ids.remove(message.sender_id)
+        valid_member_ids = list(self.game['member_ids'])
+        if message.sender_id in valid_member_ids:
+            valid_member_ids.remove(message.sender_id)
 
-        if not current_member_ids:
+        if not valid_member_ids:
             reply_content = '非常抱歉, 你来晚了, 现在已无可抽奖对象, 快去找一个现实中的人吧'
             self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
             return
 
-        giver_id = choice(current_member_ids)
+        giver_id = choice(valid_member_ids)
         self.game['winner'][message.sender_id] = (giver_id, gift_content)
-        current_member_ids.remove(giver_id)
-        self.game['member_ids'] = current_member_ids
+        # update
+        member_ids = list(self.game['member_ids'])
+        if giver_id in member_ids:
+            member_ids.remove(giver_id)
+        self.game['member_ids'] = member_ids
 
         reply_content = '恭喜 ' + self.get_winner_content(message.sender_id)
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
