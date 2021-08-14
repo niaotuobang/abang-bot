@@ -479,7 +479,8 @@ class SevenSeven(TinyApp):
     START_WORDS = ('七夕抽奖活动开始',)
     STOP_WORDS = ('七夕抽奖活动正式结束',)
     GIFT_WORD = '七夕抽奖'
-    GIFT_REGEX = re.compile(r'七夕抽奖我要一杯(\w+)奶茶')
+    GIFT_REGEX = re.compile(r'^七夕抽奖我要一杯(\w+)奶茶$')
+    EXCLUDE_WX_NAMES = ('阿邦', '二狗')
 
     def check_active(self, message):
         if not message.is_group:
@@ -492,7 +493,15 @@ class SevenSeven(TinyApp):
         reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王文君)领一杯蜜雪冰城。\n- - - - - - - - - - - -\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
-        self.game['member_ids'] = self.ctx.get_channel_member_ids()
+        member_ids = self.ctx.get_channel_member_ids()
+        # 排除机器人
+        member_ids2 = []
+        for member_id in member_ids:
+            nickname = self.ctx.get_member_nick(member_id)
+            if nickname not in self.EXCLUDE_WX_NAMES:
+                member_ids2.append(member_id)
+
+        self.game['member_ids'] = member_ids2
         reply_content = f'活动已开始, 共{len(self.game["member_ids"])}人参加, 大家快开始参与吧'
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
         self.game['winner'] = {}
@@ -535,6 +544,9 @@ class SevenSeven(TinyApp):
 
         giver_id = choice(current_member_ids)
         self.game['winner'][message.sender_id] = (giver_id, gift_content)
+        current_member_ids.remove(giver_id)
+        self.game['member_ids'] = current_member_ids
+
         reply_content = '恭喜 ' + self.get_winner_content(message.sender_id)
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
         return
