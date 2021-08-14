@@ -507,13 +507,16 @@ class SevenSeven(TinyApp):
         self.game['winner'] = {}
 
     def on_app_stop(self, message):
-        reply_contents = ['抽奖结果公示', f'共{len(self.game["winner"])}人抽中', '- - - - - - - - - - - -']
+        self.send_winner_info(message)
+
+        reply_content = '''抽奖活动已结束, 感谢大家度过了愉悦的一天'''
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
+    def send_winner_info(self, message):
+        reply_contents = ['抽奖进度', f'共{len(self.game["winner"])}人抽中', '- - - - - - - - - - - -']
         for winner_id in self.game['winner']:
             reply_contents.append(self.get_winner_content(winner_id))
         reply_content = '\n'.join(reply_contents)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
-
-        reply_content = '''抽奖活动已结束, 感谢大家度过了愉悦的一天'''
         self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
 
     def get_winner_content(self, winner_id):
@@ -562,6 +565,9 @@ class SevenSeven(TinyApp):
             gift_content = gifts[0]
             self.check_new_case(message, gift_content)
             return
+
+        if content == '抽奖进度':
+            self.send_winner_info(message)
 
 
 class ChannelContext(object):
