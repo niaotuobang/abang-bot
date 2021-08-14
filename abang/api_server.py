@@ -480,7 +480,7 @@ class SevenSeven(TinyApp):
     STOP_WORDS = ('七夕抽奖活动正式结束',)
     GIFT_WORD = '七夕抽奖'
     GIFT_REGEX = re.compile(r'^七夕抽奖我要一杯(\w+)奶茶$')
-    EXCLUDE_WX_NAMES = ('阿邦', '二狗')
+    EXCLUDE_WX_NAMES = ('阿邦', '刘二狗🍑')
 
     def check_active(self, message):
         if not message.is_group:
