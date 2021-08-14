@@ -2,6 +2,7 @@
 import _locale
 _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 
+import re
 import json
 import time
 from collections import defaultdict
@@ -473,6 +474,79 @@ class GameTips(TinyApp):
         self.set_active(False, message)
 
 
+class SevenSeven(TinyApp):
+    APP_NAME = '七夕限定抽奖活动'
+    START_WORDS = ('七夕抽奖活动开始')
+    STOP_WORDS = ('七夕抽奖活动正式结束')
+    GIFT_REGEX = re.compile(r'七夕抽奖我要一杯(\w+)奶茶')
+
+    def check_active(self, message):
+        if not message.is_group:
+            return
+        super().check_active(self, message)
+
+    def on_app_start(self, message):
+        reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王)领一杯蜜雪冰城。\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
+        self.game['member_ids'] = self.ctx.get_channel_member_ids()
+        reply_content = f'活动已开始, 共{len(self.game["member_ids"])}人参加, 大家快开始参与吧'
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.game['winner'] = {}
+
+    def on_app_stop(self, message):
+        reply_contents = ['抽奖结果公示', '---------------']
+        for winner_id in self.game['winner']:
+            reply_contents.append(self.get_winner_content(winner_id))
+        reply_content = '\n'.join(reply_contents)
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
+        reply_content = '''抽奖活动已结束, 感谢大家度过了愉悦的一天'''
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
+    def get_winner_content(self, winner_id):
+        if winner_id not in self.game['winner']:
+            return
+        gift = self.game['winner'][winner_id]
+        giver_id, gift_content = gift
+        winner = self.ctx.get_member_nick(winner_id)
+        giver = self.ctx.get_member_nick(giver_id)
+        reply_content = f'@{winner} 抽中 @{giver} 一杯{gift_content}'
+        return reply_content
+
+    def check_new_case(self, message, gift_content):
+        current_member_ids = [x for x in self.game['member_ids']]
+        if message.sender_id in current_member_ids:
+            current_member_ids.remove(message.sender_id)
+
+        if not current_member_ids:
+            reply_content = '非常抱歉, 你来晚了, 现在已无可抽奖对象, 快去找一个现实中的人吧'
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+            return
+
+        giver_id = choice(current_member_ids)
+        self.game[message.sender_id] = (giver_id, gift_content)
+        reply_content = '恭喜 ' + self.get_winner_content(message.sender_id)
+        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        return
+
+    def on_next(self, message):
+        if message.sender_id in self.game['winner']:
+            reply_content = '您已参与抽奖 ' + self.get_winner_content(message.sender_id)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+            return
+
+        content = message.content
+        if content == '七夕抽奖':
+            self.check_new_case(message, '奶茶')
+            return
+        gifts = self.GIFT_REGEX.findall(content)
+        if gifts:
+            gift_content = gifts[0]
+            self.check_new_case(message, gift_content)
+            return
+
+
 class ChannelContext(object):
 
     wechat_bot = WechatBot()
@@ -487,6 +561,14 @@ class ChannelContext(object):
         content = resp['content']
         content_json = json.loads(content)
         return content_json['nick']
+
+    def get_channel_member_ids(self):
+        resp = self.wechat_bot.get_memberid()
+        content = resp['content']
+        for info in content:
+            if info['room_id'] == self.channel_id:
+                return info['member']
+        return []
 
 
 class Message(object):
@@ -537,6 +619,7 @@ def get_channel_ctx(channel_id):
         EmojiChengyu(),
         ChengyuLoong(),
         HumanWuGong(),
+        SevenSeven(),
     ]
 
     ctx = ChannelContext(channel_id=channel_id, apps=apps)
