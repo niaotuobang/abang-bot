@@ -478,6 +478,7 @@ class SevenSeven(TinyApp):
     APP_NAME = '七夕限定抽奖活动'
     START_WORDS = ('七夕抽奖活动开始',)
     STOP_WORDS = ('七夕抽奖活动正式结束',)
+    GIFT_WORD = '七夕抽奖'
     GIFT_REGEX = re.compile(r'七夕抽奖我要一杯(\w+)奶茶')
 
     def check_active(self, message):
@@ -518,6 +519,11 @@ class SevenSeven(TinyApp):
         return reply_content
 
     def check_new_case(self, message, gift_content):
+        if message.sender_id in self.game['winner']:
+            reply_content = '您已参与抽奖 ' + self.get_winner_content(message.sender_id)
+            self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+            return
+
         current_member_ids = [x for x in self.game['member_ids']]
         if message.sender_id in current_member_ids:
             current_member_ids.remove(message.sender_id)
@@ -534,15 +540,10 @@ class SevenSeven(TinyApp):
         return
 
     def on_next(self, message):
-        if message.sender_id in self.game['winner']:
-            reply_content = '您已参与抽奖 ' + self.get_winner_content(message.sender_id)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
-            return
-
-        content = message.content
-        if content == '七夕抽奖':
+        if content == self.GIFT_WORD:
             self.check_new_case(message, '奶茶')
             return
+
         gifts = self.GIFT_REGEX.findall(content)
         if gifts:
             gift_content = gifts[0]
