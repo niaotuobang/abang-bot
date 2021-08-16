@@ -60,9 +60,6 @@ def on_message():
         return {}
 
     ctx = get_channel_ctx(message.channel_id)
-    # TODO: remove this.
-    message.set_ctx(ctx)
-
     for app in ctx.apps:
         if app.need_handle(message):
             app.check_active(message)

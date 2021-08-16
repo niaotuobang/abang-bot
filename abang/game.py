@@ -129,7 +129,7 @@ class NaiveRepeat(TinyApp):
     RANDOM_RATIO = 0.1
     HISTORY_CONTENT_LEN = 10
 
-    def on_app_start(self, message):
+    def on_app_start(self, _):
         self.game = {}
         self.game['history'] = []
         self.game['mode'] = self.MODES[0]
@@ -180,7 +180,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
     START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语', '开始抽象成语')
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
-    def on_app_start(self, message):
+    def on_app_start(self, _):
         self.game = {}
         self.game['winner'] = defaultdict(int)  # TODO: 考虑设置到 winner 中
         self.game['items'] = []
@@ -193,9 +193,9 @@ class EmojiChengyu(TinyApp, WinnerMixin):
             len(self.game['items']))
         self.ctx.reply(first_content)
 
-        self.send_one_case(message)
+        self.send_one_case()
 
-    def on_app_stop(self, message):
+    def on_app_stop(self, _):
         reply_content = self.make_winner_content(self.game['winner'])
         self.ctx.reply(reply_content)
 
@@ -218,7 +218,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
         self.game['items'] = pairs2[:20]
 
-    def send_one_case(self, message):
+    def send_one_case(self):
         if len(self.game['items']) == 0:
             return False
 
@@ -242,6 +242,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         return True
 
     def check_one_case(self, message):
+        # TODO: clean this.
         if 'last' not in self.game:
             return False
 
@@ -282,7 +283,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
             return
         success = self.check_one_case(message)
         if success and self.game['items']:
-            self.send_one_case(message)
+            self.send_one_case()
             return
 
         if not self.game['items']:
@@ -317,7 +318,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         reply_content = self.make_winner_content(self.game['winner'])
         self.ctx.reply(reply_content)
 
-    def send_one_case(self, word, message):
+    def send_one_case(self, word):
         index = self.game['count'] + 1
         question = '第 {} 条: 「{}」'.format(index, word)
         self.ctx.reply(question)
@@ -326,7 +327,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         self.game['count'] += 1
         self.game['history'].append(word)
 
-    def resend_case(self, message):
+    def resend_case(self):
         word = self.game['last']
         index = self.game['count']
         question = '第 {} 条: 「{}」'.format(index, word)
@@ -380,7 +381,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
             return None
         return choice(tip_words)
 
-    def send_tip_word(self, message):
+    def send_tip_word(self):
         old_word = self.game['last']
         tip_word = self.find_tip_word(old_word)
         if tip_word:
@@ -399,15 +400,13 @@ class ChengyuLoong(TinyApp, WinnerMixin):
     def on_next(self, message):
         content = message.content
         if content == self.THIS_QUESTION:
-            self.resend_case(message)
-            return
+            self.resend_case()
         elif content == self.TIPS:
-            self.send_tip_word(message)
-            return
+            self.send_tip_word()
         else:
             if self.check_match(message):
                 self.on_matched(message)
-                self.send_one_case(content, message)
+                self.send_one_case(content)
 
 
 class HumanWuGong(ChengyuLoong):
@@ -428,12 +427,12 @@ class HumanWuGong(ChengyuLoong):
     def on_next(self, message):
         content = message.content
         if content == self.THIS_QUESTION:
-            self.resend_case(message)
+            self.resend_case()
             return
 
         if self.check_match(message):
             self.on_matched(message)
-            self.send_one_case(content, message)
+            self.send_one_case(content)
 
 
 class GameTips(TinyApp):
@@ -485,13 +484,13 @@ class SevenSeven(TinyApp):
         reply_content = f'活动已开始, 共{len(self.game["member_ids"])}人参加, 大家快开始参与吧'
         self.ctx.reply(reply_content)
 
-    def on_app_stop(self, message):
-        self.send_winner_info(message)
+    def on_app_stop(self, _):
+        self.send_winner_info()
 
         reply_content = '''抽奖活动已结束, 感谢大家度过了愉悦的一天'''
         self.ctx.reply(reply_content)
 
-    def send_winner_info(self, message):
+    def send_winner_info(self):
         reply_contents = ['抽奖进度', f'共{len(self.game["winner"])}人抽中', '- - - - - - - - - - - -']
         for winner_id in self.game['winner']:
             reply_contents.append(self.get_winner_content(winner_id))
@@ -550,4 +549,4 @@ class SevenSeven(TinyApp):
             return
 
         if content == '抽奖进度':
-            self.send_winner_info(message)
+            self.send_winner_info()

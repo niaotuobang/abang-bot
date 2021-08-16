@@ -43,10 +43,6 @@ class ChannelContext(object):
 class Message(object):
     def __init__(self, body):
         self.body = body
-        self.ctx = None
-
-    def set_ctx(self, ctx):
-        self.ctx = ctx
 
     @property
     def content(self):
