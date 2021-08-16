@@ -77,7 +77,7 @@ class TinyApp(object):
 
     def check_next(self, message):
         if self.active:
-            self.on_next(message)
+            self.on_app_next(message)
 
     def set_active(self, active, message):
         if self.active == active:
@@ -96,7 +96,7 @@ class TinyApp(object):
     def on_app_stop(self, message):
         pass
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         pass
 
 
@@ -104,7 +104,7 @@ class Hello(TinyApp):
     APP_NAME = '打招呼'
     START_WORDS = ('阿邦', '毛毛', '阿邦你好', '邦邦')
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         reply_content = '让我来邦你'
         if message.is_group:
             self.ctx.reply_at(reply_content, message.sender_id)
@@ -134,7 +134,7 @@ class NaiveRepeat(TinyApp):
         self.game['history'] = []
         self.game['mode'] = self.MODES[0]
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         content = message.content
         if message.content in self.MODES:
             self.game['mode'] = content
@@ -278,7 +278,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         self.ctx.reply_at(reply_content, message.sender_id)
         return True
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         if not self.game.get('last'):
             return
         success = self.check_one_case(message)
@@ -397,7 +397,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
 
         self.ctx.reply(tip_content)
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         content = message.content
         if content == self.THIS_QUESTION:
             self.resend_case()
@@ -424,7 +424,7 @@ class HumanWuGong(ChengyuLoong):
             return False
         return True
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         content = message.content
         if content == self.THIS_QUESTION:
             self.resend_case()
@@ -439,7 +439,7 @@ class GameTips(TinyApp):
     APP_NAME = '玩法说明'
     START_WORDS = ('阿邦玩法', '阿邦游戏', '阿邦游戏介绍')
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         play_descs = [app.play_desc for app in self.ctx.apps]
         reply_content = '\n- - - - - - - - - - - - - - - - -\n'.join([
             f'{i}. {desc}'
@@ -536,7 +536,7 @@ class SevenSeven(TinyApp):
         self.ctx.reply_at(reply_content, message.sender_id)
         return
 
-    def on_next(self, message):
+    def on_app_next(self, message):
         content = message.content
         if content == self.GIFT_WORD:
             self.check_new_case(message, '奶茶')
