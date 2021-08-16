@@ -110,16 +110,9 @@ class Hello(TinyApp):
     def on_next(self, message):
         reply_content = '让我来邦你'
         if message.is_group:
-            nickname = self.ctx.get_member_nick(message.sender_id)
-            self.wechat_bot.send_at_msg(
-                wx_id=message.sender_id,
-                room_id=message.channel_id,
-                content=reply_content,
-                nickname=nickname)
+            self.ctx.reply_at(reply_content, message.sender_id)
         else:
-            self.wechat_bot.send_txt_msg(
-                to=message.channel_id,
-                content=reply_content)
+            self.ctx.reply(reply_content)
 
         self.set_active(False, message)
 
@@ -129,7 +122,12 @@ class NaiveRepeat(TinyApp):
     APP_NAME = '复读机'
     START_WORDS = ('开始复读', '阿邦复读', '阿邦开始复读')
     STOP_WORDS = ('结束复读', '别复读了')
-    MODES = ('弱智复读', '随机复读', '智能复读')
+
+    STUPID_MODE = '弱智复读'
+    RANDOM_MODE = '随机复读'
+    CLEVER_MODE = '智能复读'
+
+    MODES = (STUPID_MODE, RANDOM_MODE, CLEVER_MODE)
     APP_DESC = f"输入 {'、'.join(MODES)} 切换模式"
     RANDOM_RATIO = 0.1
     HISTORY_CONTENT_LEN = 10
@@ -148,14 +146,18 @@ class NaiveRepeat(TinyApp):
         self.game['history'].append(content)
         self.game['history'] = self.game['history'][-self.HISTORY_CONTENT_LEN:]
 
-        if self.game['mode'] == '弱智复读':
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
-        elif self.game['mode'] == '随机复读':
+        repeat = False
+        if self.game['mode'] == self.STUPID_MODE:
+            repeat = True
+        elif self.game['mode'] == self.RANDOM_MODE:
             if random.random() < self.RANDOM_RATIO:
-                self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
+                repeat = True
         elif self.game['mode'] == '智能复读':
             if self.game['history'].count(content) > 1:
-                self.wechat_bot.send_txt_msg(to=message.channel_id, content=message.content)
+                repeat = True
+
+        if repeat:
+            self.ctx.reply(message.content)
 
 
 class WinnerMixin(object):
@@ -172,7 +174,7 @@ class WinnerMixin(object):
             content = f'{medals[index]} 第 {index + 1} 名: @{nickname} (赢了 {count} 次)'
             contents.append(content)
 
-        reply_content = ''.join(contents)
+        reply_content = '\n'.join(contents)
         return reply_content
 
 
@@ -192,15 +194,13 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
         first_content = '最多{}个题目,每次问题20秒后提示1个字(也可发送"提示"触发), 45秒后公布答案(也可发送"我要答案"触发)'.format(
             len(self.game['items']))
-        self.wechat_bot.send_txt_msg(
-            to=message.channel_id,
-            content=first_content)
+        self.ctx.reply(first_content)
 
         self.send_one_case(message)
 
     def on_app_stop(self, message):
         reply_content = self.make_winner_content(self.game['winner'])
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply(reply_content)
 
         self.game = {}
 
@@ -233,8 +233,8 @@ class EmojiChengyu(TinyApp, WinnerMixin):
             len(item['word']),
             item['emoji'])
 
-        # TODO: 考虑 message 自带 reply 方法
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
+        self.ctx.reply(question)
+
         self.game['last'] = {
             'item': item,
             'create_time': time.time(),
@@ -258,31 +258,26 @@ class EmojiChengyu(TinyApp, WinnerMixin):
             # timeout
             if time.time() - last_create_time >= 45 or content == '我要答案':
                 reply_content = '很遗憾, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
-                self.wechat_bot.send_txt_msg(
-                    to=message.channel_id,
-                    content=reply_content)
+                self.ctx.reply(reply_content)
                 return True
             # tip
             if not self.game['last']['tip']:
                 if time.time() - last_create_time >= 20 or content == '提示':
                     # TODO: mark random
                     reply_content = '答案提示 {}'.format(answer[0] + '*' + answer[2] + '*')
-                    self.wechat_bot.send_txt_msg(
-                        to=message.channel_id,
-                        content=reply_content)
+                    self.ctx.reply(reply_content)
                     self.game['last']['tip'] = True
                     return False
 
             return False
 
         self.game['winner'][message.sender_id] += 1
-        nickname = self.ctx.get_member_nick(message.sender_id)
-        reply_content = '恭喜@{} 猜对了, {} 的答案是 {}'.format(
-            nickname,
+
+        reply_content = '恭喜你猜对了, {} 的答案是 {}'.format(
             last_item['emoji'],
             last_item['word'])
-        self.wechat_bot.send_txt_msg(
-            to=message.channel_id, content=reply_content)
+
+        self.ctx.reply_at(reply_content, message.sender_id)
         return True
 
     def on_next(self, message):
@@ -317,18 +312,18 @@ class ChengyuLoong(TinyApp, WinnerMixin):
 
     def on_app_stop(self, message):
         reply_content = '已结束, 本次接龙长度 {}'.format(self.game['count'])
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply(reply_content)
 
         reply_content = ' -> '.join(self.game['history'])
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply(reply_content)
 
         reply_content = self.make_winner_content(self.game['winner'])
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply(reply_content)
 
     def send_one_case(self, word, message):
         index = self.game['count'] + 1
         question = '第 {} 条: 「{}」'.format(index, word)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
+        self.ctx.reply(question)
 
         self.game['last'] = word
         self.game['count'] += 1
@@ -338,7 +333,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         word = self.game['last']
         index = self.game['count']
         question = '第 {} 条: 「{}」'.format(index, word)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=question)
+        self.ctx.reply(question)
 
     def is_match(self, old_word, new_word):
         if len(new_word) < 3:
@@ -362,7 +357,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
 
         if new_word in self.game['history']:
             tip_content = '「{}」已用过'.format(new_word)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
+            self.ctx.reply(tip_content)
             return False
 
         return True
@@ -371,9 +366,8 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         # 统计
         self.game['winner'][message.sender_id] += 1
 
-        nickname = self.ctx.get_member_nick(message.sender_id)
-        reply_content = '恭喜@{} 接龙成功 {}'.format(nickname, message.content)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        reply_content = '恭喜接龙成功 --> {}'.format(message.content)
+        self.ctx.reply_at(reply_content, message.sender_id)
 
     def find_tip_word(self, old_word):
         tip_words = []
@@ -403,7 +397,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         else:
             tip_content = '未找到可用成语'
 
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=tip_content)
+        self.ctx.reply(tip_content)
 
     def on_next(self, message):
         content = message.content
@@ -456,9 +450,8 @@ class GameTips(TinyApp):
             for i, desc in enumerate(filter(None, play_descs))
         ])
 
-        self.wechat_bot.send_txt_msg(
-            to=message.channel_id,
-            content=reply_content)
+        self.ctx.reply(reply_content)
+
         self.set_active(False, message)
 
 
@@ -479,7 +472,7 @@ class SevenSeven(TinyApp):
         self.game = {}
 
         reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王文君)领一杯蜜雪冰城。\n- - - - - - - - - - - -\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply(reply_content)
 
         member_ids = self.ctx.get_channel_member_ids()
         # 排除机器人
@@ -490,22 +483,24 @@ class SevenSeven(TinyApp):
                 member_ids2.append(member_id)
 
         self.game['member_ids'] = member_ids2
-        reply_content = f'活动已开始, 共{len(self.game["member_ids"])}人参加, 大家快开始参与吧'
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
         self.game['winner'] = {}
+
+        reply_content = f'活动已开始, 共{len(self.game["member_ids"])}人参加, 大家快开始参与吧'
+        self.ctx.reply(reply_content)
 
     def on_app_stop(self, message):
         self.send_winner_info(message)
 
         reply_content = '''抽奖活动已结束, 感谢大家度过了愉悦的一天'''
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply(reply_content)
 
     def send_winner_info(self, message):
         reply_contents = ['抽奖进度', f'共{len(self.game["winner"])}人抽中', '- - - - - - - - - - - -']
         for winner_id in self.game['winner']:
             reply_contents.append(self.get_winner_content(winner_id))
         reply_content = '\n'.join(reply_contents)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+
+        self.ctx.reply(reply_content)
 
     def get_winner_content(self, winner_id):
         if winner_id not in self.game['winner']:
@@ -515,13 +510,13 @@ class SevenSeven(TinyApp):
         giver_id, gift_content = gift
         winner = self.ctx.get_member_nick(winner_id)
         giver = self.ctx.get_member_nick(giver_id)
-        reply_content = f'@{winner} 抽中 @{giver} 一杯{gift_content}'
+        reply_content = f'@{winner} 抽中 @{giver} 送出的 一杯{gift_content}'
         return reply_content
 
     def check_new_case(self, message, gift_content):
         if message.sender_id in self.game['winner']:
             reply_content = '您已参与抽奖 ' + self.get_winner_content(message.sender_id)
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+            self.ctx.reply(reply_content)
             return
 
         valid_member_ids = list(self.game['member_ids'])
@@ -530,7 +525,7 @@ class SevenSeven(TinyApp):
 
         if not valid_member_ids:
             reply_content = '非常抱歉, 你来晚了, 现在已无可抽奖对象, 快去找一个现实中的人吧'
-            self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+            self.ctx.reply(reply_content)
             return
 
         giver_id = choice(valid_member_ids)
@@ -542,7 +537,7 @@ class SevenSeven(TinyApp):
         self.game['member_ids'] = member_ids
 
         reply_content = '恭喜 ' + self.get_winner_content(message.sender_id)
-        self.wechat_bot.send_txt_msg(to=message.channel_id, content=reply_content)
+        self.ctx.reply_at(reply_content, message.sender_id)
         return
 
     def on_next(self, message):

@@ -28,6 +28,17 @@ class ChannelContext(object):
                 return info['member']
         return []
 
+    def reply(self, reply_content):
+        self.wechat_bot.send_txt_msg(to=self.channel_id, content=reply_content)
+
+    def reply_at(self, reply_content, wx_id):
+        nickname = self.get_member_nick(wx_id)
+        self.wechat_bot.send_at_msg(
+            wx_id=wx_id,
+            room_id=self.channel_id,
+            content=reply_content,
+            nickname=nickname)
+
 
 class Message(object):
     def __init__(self, body):
