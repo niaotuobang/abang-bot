@@ -64,7 +64,7 @@ class TinyApp(object):
             desc += f'\n{self.APP_DESC}'
         return desc
 
-    def need_handle(self, message):
+    def check_need_handle(self, message):
         if message.msg_type in self.MESSAGE_TYPES:
             return True
         return False
@@ -74,6 +74,10 @@ class TinyApp(object):
             self.set_active(True, message)
         elif message.content in self.STOP_WORDS:
             self.set_active(False, message)
+
+    def check_next(self, message):
+        if self.active:
+            self.on_next(message)
 
     def set_active(self, active, message):
         if self.active == active:
@@ -91,10 +95,6 @@ class TinyApp(object):
 
     def on_app_stop(self, message):
         pass
-
-    def check_next(self, message):
-        if self.active:
-            self.on_next(message)
 
     def on_next(self, message):
         pass
