@@ -10,7 +10,6 @@ from emoji_chengyu.chengyu import gen_one_emoji_pair
 from emoji_chengyu.data import DataSource as ChengyuDataSource
 import pypinyin
 
-from wx_sdk import WechatBot
 from wx_sdk import MSGType
 
 
@@ -46,8 +45,6 @@ class TinyApp(object):
     APP_DESC = None
     START_WORDS = ()
     STOP_WORDS = ()
-
-    wechat_bot = WechatBot()
 
     def __init__(self):
         self.ctx = None
