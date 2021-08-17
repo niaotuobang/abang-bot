@@ -1,4 +1,3 @@
-from collections import defaultdict
 from collections import Counter
 from functools import cached_property
 import random
@@ -11,6 +10,8 @@ from emoji_chengyu.data import DataSource as ChengyuDataSource
 import pypinyin
 
 from wx_sdk import MSGType
+
+from core import GameData
 
 
 def is_pinyin_equal(wordA, wordB, strict=False):
@@ -100,6 +101,42 @@ class TinyApp(object):
         pass
 
 
+class WinnerMixin(object):
+
+    def start_record_winner(self):
+        self.winner = GameData()
+        self._record = True
+
+    def stop_record_winner(self):
+        self._record = False
+        # TODO collection to ctx
+        self.winner = None
+
+    def record_winner(self, wx_id):
+        if not self._record:
+            return
+        self.winner[wx_id] = self.winner.get(wx_id, 0) + 1
+
+    def make_winner_content(self):
+        medals = ['🏅', '🥈', '🥉']
+
+        contents = []
+        counter = Counter(self.winner)
+        for index, item in enumerate(counter.most_common(3)):
+            winner_id = item[0]
+            count = item[1]
+            nickname = self.ctx.get_member_nick(winner_id)
+            content = f'{medals[index]} 第 {index + 1} 名: @{nickname} (赢了 {count} 次)'
+            contents.append(content)
+
+        reply_content = '\n'.join(contents)
+        return reply_content
+
+    def send_winners(self):
+        reply_content = self.make_winner_content()
+        self.ctx.reply(reply_content)
+
+
 class Hello(TinyApp):
     APP_NAME = '打招呼'
     START_WORDS = ('阿邦', '毛毛', '阿邦你好', '邦邦')
@@ -157,32 +194,14 @@ class NaiveRepeat(TinyApp):
             self.ctx.reply(message.content)
 
 
-class WinnerMixin(object):
-
-    def make_winner_content(self, winner):
-        medals = ['🏅', '🥈', '🥉']
-
-        contents = []
-        counter = Counter(winner)
-        for index, item in enumerate(counter.most_common(3)):
-            winner_id = item[0]
-            count = item[1]
-            nickname = self.ctx.get_member_nick(winner_id)
-            content = f'{medals[index]} 第 {index + 1} 名: @{nickname} (赢了 {count} 次)'
-            contents.append(content)
-
-        reply_content = '\n'.join(contents)
-        return reply_content
-
-
 class EmojiChengyu(TinyApp, WinnerMixin):
     APP_NAME = '表情猜成语'
     START_WORDS = ('开始表情猜成语', '阿邦表情猜成语', '阿邦表情成语', '开始抽象成语')
     STOP_WORDS = ('结束游戏', '结束表情猜成语')
 
     def on_app_start(self, _):
+        self.start_record_winner()
         self.game = {}
-        self.game['winner'] = defaultdict(int)  # TODO: 考虑设置到 winner 中
         self.game['items'] = []
         self.game['checked'] = []
         self.game['last'] = None
@@ -196,10 +215,9 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         self.send_one_case()
 
     def on_app_stop(self, _):
-        reply_content = self.make_winner_content(self.game['winner'])
-        self.ctx.reply(reply_content)
-
         self.game = {}
+        self.send_winners()
+        self.stop_record_winner()
 
     def make_more_item(self):
         N = 60
@@ -269,8 +287,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
             return False
 
-        self.game['winner'][message.sender_id] += 1
-
+        self.record_winner(message.sender_id)
         reply_content = '恭喜你猜对了, {} 的答案是 {}'.format(
             last_item['emoji'],
             last_item['word'])
@@ -300,8 +317,9 @@ class ChengyuLoong(TinyApp, WinnerMixin):
     APP_DESC = f'输入 {TIPS} 可提示,输入 {THIS_QUESTION} 显示正在接龙的词'
 
     def on_app_start(self, message):
+        self.start_record_winner()
+
         self.game = {}
-        self.game['winner'] = defaultdict(int)
         self.game['count'] = 0
         self.game['history'] = []
 
@@ -315,8 +333,8 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         reply_content = ' -> '.join(self.game['history'])
         self.ctx.reply(reply_content)
 
-        reply_content = self.make_winner_content(self.game['winner'])
-        self.ctx.reply(reply_content)
+        self.send_winners()
+        self.stop_record_winner()
 
     def send_one_case(self, word):
         index = self.game['count'] + 1
@@ -361,8 +379,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         return True
 
     def on_matched(self, message):
-        # 统计
-        self.game['winner'][message.sender_id] += 1
+        self.record_winner(message.sender_id)
 
         reply_content = '恭喜接龙成功 --> {}'.format(message.content)
         self.ctx.reply_at(reply_content, message.sender_id)
@@ -550,3 +567,17 @@ class SevenSeven(TinyApp):
 
         if content == '抽奖进度':
             self.send_winner_info()
+
+
+class Rank(TinyApp):
+    APP_NAME = '排行榜'
+    LAZY_RANK = '闲人排行榜'
+    REPEAT_RANK = '复读机排行榜'
+    GOLD_RANK = '金句排行榜'
+    START_WORDS = (LAZY_RANK, REPEAT_RANK, GOLD_RANK)
+
+    def on_app_next(self, message):
+        content = message.content
+        if content == self.LAZY_RANK:
+            pass
+        self.set_active(False, message)

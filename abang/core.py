@@ -5,6 +5,10 @@ from wx_sdk import WechatBot
 from wx_sdk import MSGType
 
 
+class GameData(dict):
+    pass
+
+
 class ChannelContext(object):
 
     wechat_bot = WechatBot()
@@ -12,6 +16,7 @@ class ChannelContext(object):
     def __init__(self, channel_id, apps=None):
         self.channel_id = channel_id
         self.apps = apps or []
+        self.winner = GameData()
 
     @cached(cache=TTLCache(maxsize=500, ttl=86400))
     def get_member_nick(self, wx_id):
@@ -38,6 +43,11 @@ class ChannelContext(object):
             room_id=self.channel_id,
             content=reply_content,
             nickname=nickname)
+
+    def collect_winner(self, app_name, wx_id, count=1):
+        if app_name not in self.winner:
+            self.winner[app_name] = {}
+        self.winner[app_name][wx_id] += count
 
 
 class Message(object):
