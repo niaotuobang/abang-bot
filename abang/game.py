@@ -324,7 +324,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         self.game['history'] = []
 
         new_word = choice_common_chengyu()
-        self.send_one_case(new_word, message)
+        self.send_one_case(new_word)
 
     def on_app_stop(self, message):
         reply_content = '已结束, 本次接龙长度 {}'.format(self.game['count'])
