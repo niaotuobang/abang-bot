@@ -71,10 +71,16 @@ class TinyApp(object):
             return True
         return False
 
+    def check_is_start(self, message):
+        return message.content in self.START_WORDS
+
+    def check_is_stop(self, message):
+        return message.content in self.STOP_WORDS
+
     def check_active(self, message):
-        if message.content in self.START_WORDS:
+        if self.check_is_start(message):
             self.set_active(True, message)
-        elif message.content in self.STOP_WORDS:
+        elif self.check_is_stop(message):
             self.set_active(False, message)
 
     def check_next(self, message):
@@ -579,6 +585,47 @@ class SevenSeven(TinyApp):
 
         if content == '抽奖进度':
             self.send_matched_info()
+
+
+class Choice(TinyApp):
+    APP_NAME = '抽奖'
+    APP_DESC = '输入「抽N个人xxx」进行抽奖'
+    CHOICE_RE = re.compile(r'抽([\t\d ]+)个?人(\w+)?')
+
+    def check_is_start(self, message):
+        return bool(self.CHOICE_RE.search(message.content))
+
+    def parse_N_and_XX(self, message):
+        match = self.CHOICE_RE.search(message.content)
+        N, XX = match.groups()
+        N = N.replace(' ', '').replace('\t', '').strip()
+        XX = XX.strip()
+        return int(N), XX
+
+    def on_app_next(self, message):
+        N, XX = self.parse_N_and_XX(message)
+        member_ids = self.ctx.get_channel_member_ids()
+        if len(member_ids) < N:
+            self.ctx.reply_at('抽奖人数超过群聊人数, 请重新输出', message.sender_id)
+            return
+
+        member_ids2 = random.sample(member_ids, N)
+
+        sender = self.ctx.get_member_nick(message.sender_id)
+        reply_contents = [
+            f'@{sender} 发起的抽奖结果公示',
+            message.content,
+            '- - - - - - - - - - - - - - - - -'
+        ]
+        for wx_id in member_ids2:
+            nickname = self.ctx.get_member_nick(wx_id)
+            reply_contents.append(f'@{nickname}')
+
+        reply_contents.append('- - - - - - - - - - - - - - - - -')
+        reply_content = '\n'.join(reply_contents)
+        self.ctx.reply(reply_content)
+
+        self.set_active(False, message)
 
 
 class Rank(TinyApp):
