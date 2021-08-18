@@ -599,11 +599,11 @@ class Choice(TinyApp):
         match = self.CHOICE_RE.search(message.content)
         N, XX = match.groups()
         N = N.replace(' ', '').replace('\t', '').strip()
-        XX = XX.strip()
+        XX = XX.strip() if XX else ''
         return int(N), XX
 
     def on_app_next(self, message):
-        N, XX = self.parse_N_and_XX(message)
+        N, _ = self.parse_N_and_XX(message)
         member_ids = self.ctx.get_channel_member_ids()
         if len(member_ids) < N:
             self.ctx.reply_at('抽奖人数超过群聊人数, 请重新输出', message.sender_id)
