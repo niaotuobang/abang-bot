@@ -104,14 +104,22 @@ class TinyApp(object):
 
 class WinnerMixin(object):
 
+    WIN_TOP = 3
+
     def start_record_winner(self):
         self.winner = GameData()
         self._record = True
 
     def stop_record_winner(self):
         self._record = False
-        # TODO collection to ctx
+        self._collect_ctx()
         self.winner = None
+
+    def _collect_ctx(self):
+        app_name = self.__class__.__name__
+        counter = Counter(self.winner)
+        for _, item in enumerate(counter.most_common(self.WIN_TOP)):
+            self.ctx.collect_winner(app_name, wx_id=item[0])
 
     def record_winner(self, wx_id):
         if not self._record:
@@ -123,7 +131,7 @@ class WinnerMixin(object):
 
         contents = []
         counter = Counter(self.winner)
-        for index, item in enumerate(counter.most_common(3)):
+        for index, item in enumerate(counter.most_common(self.WIN_TOP)):
             winner_id = item[0]
             count = item[1]
             nickname = self.ctx.get_member_nick(winner_id)
