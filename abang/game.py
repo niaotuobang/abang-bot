@@ -603,7 +603,7 @@ class Choice(TinyApp):
         return int(N), XX
 
     def on_app_next(self, message):
-        N, _ = self.parse_N_and_XX(message)
+        N, XX = self.parse_N_and_XX(message)
         member_ids = self.ctx.get_channel_member_ids()
         if len(member_ids) < N:
             self.ctx.reply_at('抽奖人数超过群聊人数, 请重新输出', message.sender_id)
@@ -614,7 +614,7 @@ class Choice(TinyApp):
         sender = self.ctx.get_member_nick(message.sender_id)
         reply_contents = [
             f'@{sender} 发起的抽奖结果公示',
-            message.content,
+            f'抽奖详情: {N}人, {XX}',
             '- - - - - - - - - - - - - - - - -'
         ]
         for wx_id in member_ids2:
