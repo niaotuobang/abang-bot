@@ -48,6 +48,8 @@ class TinyApp(object):
     START_WORDS = ()
     STOP_WORDS = ()
 
+    NEXT_LINE = '- - - - - - - - - - - - - - - -'
+
     def __init__(self):
         self.ctx = None
 
@@ -473,7 +475,8 @@ class GameTips(TinyApp):
 
     def on_app_next(self, message):
         play_descs = [app.play_desc for app in self.ctx.apps]
-        reply_content = '\n- - - - - - - - - - - - - - - - -\n'.join([
+        sep_line = f'\n{self.NEXT_LINE}\n'
+        reply_content = sep_line.join([
             f'{i}. {desc}'
             for i, desc in enumerate(filter(None, play_descs))
         ])
@@ -615,13 +618,13 @@ class Choice(TinyApp):
         reply_contents = [
             f'@{sender} 发起的抽奖结果公示',
             f'抽奖详情: {N}人, {XX}',
-            '- - - - - - - - - - - - - - - - -'
+            self.NEXT_LINE,
         ]
         for wx_id in member_ids2:
             nickname = self.ctx.get_member_nick(wx_id)
             reply_contents.append(f'@{nickname}')
 
-        reply_contents.append('- - - - - - - - - - - - - - - - -')
+        reply_contents.append(self.NEXT_LINE)
         reply_content = '\n'.join(reply_contents)
         self.ctx.reply(reply_content)
 
