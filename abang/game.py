@@ -624,7 +624,6 @@ class Choice(TinyApp):
             nickname = self.ctx.get_member_nick(wx_id)
             reply_contents.append(f'@{nickname}')
 
-        reply_contents.append(self.NEXT_LINE)
         reply_content = '\n'.join(reply_contents)
         self.ctx.reply(reply_content)
 
