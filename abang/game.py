@@ -4,6 +4,7 @@ import random
 from random import choice
 import re
 import time
+import datetime
 
 from emoji_chengyu.chengyu import gen_one_emoji_pair
 from emoji_chengyu.data import DataSource as ChengyuDataSource
@@ -475,10 +476,15 @@ class SevenSeven(TinyApp):
     GIFT_WORD = '七夕抽奖'
     GIFT_REGEX = re.compile(r'^七夕抽奖我要一杯(\w+)奶茶$')
     EXCLUDE_WX_NAMES = ('阿邦', '刘二狗🍑')
+    VALID_DAYS = ('2021-08-14',)
 
     def check_active(self, message):
         if not message.is_group:
             return
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        if today not in self.VALID_DAYS:
+            return
+
         super().check_active(message)
 
     def on_app_start(self, message):
@@ -496,39 +502,39 @@ class SevenSeven(TinyApp):
                 member_ids2.append(member_id)
 
         self.game['member_ids'] = member_ids2
-        self.game['winner'] = {}
+        self.game['matched'] = {}
 
         reply_content = f'活动已开始, 共{len(self.game["member_ids"])}人参加, 大家快开始参与吧'
         self.ctx.reply(reply_content)
 
     def on_app_stop(self, _):
-        self.send_winner_info()
+        self.send_matched_info()
 
         reply_content = '''抽奖活动已结束, 感谢大家度过了愉悦的一天'''
         self.ctx.reply(reply_content)
 
-    def send_winner_info(self):
-        reply_contents = ['抽奖进度', f'共{len(self.game["winner"])}人抽中', '- - - - - - - - - - - -']
-        for winner_id in self.game['winner']:
-            reply_contents.append(self.get_winner_content(winner_id))
+    def send_matched_info(self):
+        reply_contents = ['抽奖进度', f'共{len(self.game["matched"])}人抽中', '- - - - - - - - - - - -']
+        for wx_id in self.game['matched']:
+            reply_contents.append(self.get_matched_content(wx_id))
         reply_content = '\n'.join(reply_contents)
 
         self.ctx.reply(reply_content)
 
-    def get_winner_content(self, winner_id):
-        if winner_id not in self.game['winner']:
+    def get_matched_content(self, wx_id):
+        if wx_id not in self.game['matched']:
             return None
 
-        gift = self.game['winner'][winner_id]
+        gift = self.game['matched'][wx_id]
         giver_id, gift_content = gift
-        winner = self.ctx.get_member_nick(winner_id)
+        getter = self.ctx.get_member_nick(wx_id)
         giver = self.ctx.get_member_nick(giver_id)
-        reply_content = f'@{winner} 抽中 @{giver} 送出的 一杯{gift_content}'
+        reply_content = f'@{getter} 抽中 @{giver} 送出的 一杯{gift_content}'
         return reply_content
 
     def check_new_case(self, message, gift_content):
-        if message.sender_id in self.game['winner']:
-            reply_content = '您已参与抽奖 ' + self.get_winner_content(message.sender_id)
+        if message.sender_id in self.game['matched']:
+            reply_content = '您已参与抽奖 ' + self.get_matched_content(message.sender_id)
             self.ctx.reply(reply_content)
             return
 
@@ -542,14 +548,12 @@ class SevenSeven(TinyApp):
             return
 
         giver_id = choice(valid_member_ids)
-        self.game['winner'][message.sender_id] = (giver_id, gift_content)
+        self.game['matched'][message.sender_id] = (giver_id, gift_content)
         # update
-        member_ids = list(self.game['member_ids'])
-        if giver_id in member_ids:
-            member_ids.remove(giver_id)
+        member_ids = list(set(self.game['member_ids']) - set([giver_id]))
         self.game['member_ids'] = member_ids
 
-        reply_content = '恭喜 ' + self.get_winner_content(message.sender_id)
+        reply_content = '恭喜 ' + self.get_matched_content(message.sender_id)
         self.ctx.reply_at(reply_content, message.sender_id)
         return
 
@@ -566,7 +570,7 @@ class SevenSeven(TinyApp):
             return
 
         if content == '抽奖进度':
-            self.send_winner_info()
+            self.send_matched_info()
 
 
 class Rank(TinyApp):
