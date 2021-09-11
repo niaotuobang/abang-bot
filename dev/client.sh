@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export WECHATY_PUPPET_SERVICE_ENDPOINT=127.0.0.1:8077
+export WECHATY_PUPPET_SERVICE_TOKEN="python-wechaty-81ff946e-a3cd-45a5-bb18-b618e8efd75b"
