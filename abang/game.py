@@ -5,9 +5,10 @@ from random import choice
 import re
 import time
 import datetime
+import itertools
 
-from emoji_chengyu.chengyu import gen_one_emoji_pair
-from emoji_chengyu.data import DataSource as ChengyuDataSource
+from emoji_chengyu.puzzle import gen_puzzle
+from emoji_chengyu.data import common_chengyu_list
 import pypinyin
 
 from wx_sdk import MSGType
@@ -32,10 +33,8 @@ def is_pinyin_equal(wordA, wordB, strict=False):
 
 
 def choice_common_chengyu():
-    items = ChengyuDataSource.chengyu_list[:ChengyuDataSource.common_chengyu_count]
-    items = filter(lambda item: len(item['words']) == 4, items)
-    item = choice(list(items))
-    return item['word']
+    item = choice(common_chengyu_list)
+    return item.word
 
 
 class TinyApp(object):
@@ -238,9 +237,10 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
     def make_more_item(self):
         N = 60
-        pairs = [gen_one_emoji_pair(search_count=500) for i in range(N)]
+        pairs = gen_puzzle()
         pairs = filter(None, pairs)
         pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
+        pairs = itertools.islice(pairs, 0, 60)
         pairs = list(pairs)
         pairs.sort(key=lambda pair: pair['emojis'].count(None))
 
