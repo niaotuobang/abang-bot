@@ -11,9 +11,9 @@ from emoji_chengyu.puzzle import gen_puzzle
 from emoji_chengyu.data import common_chengyu_list
 import pypinyin
 
-from abang.wx_sdk import MSGType
+from wx_sdk import MSGType
 
-from abang.base import GameData
+from core import GameData
 
 
 def is_pinyin_equal(wordA, wordB, strict=False):
