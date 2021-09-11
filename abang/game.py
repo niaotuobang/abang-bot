@@ -12,7 +12,7 @@ import pypinyin
 
 from wx_sdk import MSGType
 
-from core import GameData
+from base import GameData
 
 
 def is_pinyin_equal(wordA, wordB, strict=False):
@@ -620,6 +620,7 @@ class Choice(TinyApp):
             f'抽奖详情: {N}人, {XX}',
             self.NEXT_LINE,
         ]
+
         for wx_id in member_ids2:
             nickname = self.ctx.get_member_nick(wx_id)
             reply_contents.append(f'@{nickname}')

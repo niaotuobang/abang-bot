@@ -6,17 +6,8 @@ _locale._getdefaultlocale = (lambda *args: ['zh_CN', 'utf8']) # noqa
 from flask import Flask
 from flask import request
 
-from game import Hello
-from game import GameTips
-from game import NaiveRepeat
-from game import EmojiChengyu
-from game import ChengyuLoong
-from game import HumanWuGong
-from game import SevenSeven
-from game import Choice
-
-from core import ChannelContext
-from core import Message
+from core import PCMessage as Message
+from internal import new_channel_ctx
 
 
 app = Flask(__name__)
@@ -27,24 +18,10 @@ channel_db = {}
 
 
 def get_channel_ctx(channel_id):
-    if channel_id in channel_db:
+    if channel_id not in channel_db:
         return channel_db[channel_id]
 
-    apps = [
-        Hello(),
-        GameTips(),
-        NaiveRepeat(),
-        EmojiChengyu(),
-        ChengyuLoong(),
-        HumanWuGong(),
-        SevenSeven(),
-        Choice(),
-    ]
-
-    ctx = ChannelContext(channel_id=channel_id, apps=apps)
-    for app in apps:
-        app.set_ctx(ctx)
-
+    ctx = new_channel_ctx(channel_id)
     channel_db[channel_id] = ctx
     return ctx
 

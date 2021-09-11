@@ -50,7 +50,7 @@ class ChannelContext(object):
         self.winner[app_name][wx_id] += count
 
 
-class Message(object):
+class PCMessage(object):
     def __init__(self, body):
         self.body = body
 
@@ -77,3 +77,46 @@ class Message(object):
     @property
     def is_heartbeat(self):
         return self.msg_type == MSGType.HEART_BEAT
+
+
+class WechatyMessage(object):
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    @property
+    def content(self):
+        return self.body['content']
+
+    @property
+    def channel_id(self):
+        room = self.msg.room()
+        if room is not None:
+            channel_id = room.room_id
+        else:
+            talker = self.msg.talker()
+            if talker is None:
+                raise RuntimeError('Message must be from room/contact')
+            channel_id = talker.contact_id
+        return channel_id
+
+    @property
+    def sender_id(self):
+        talker = self.msg.talker()
+        return talker.contact_id
+
+    @property
+    def is_group(self):
+        return self.msg.room() is not None
+
+    @property
+    def is_text_msg(self):
+        return self.msg.type() == 1  # TODO use const
+
+    @property
+    def msg_type(self):
+        return self.msg.type()
+
+    @property
+    def is_heartbeat(self):
+        return False
