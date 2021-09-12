@@ -366,7 +366,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         question = '第 {} 条: 「{}」'.format(index, word)
         await self.ctx.say(question)
 
-    def is_match(self, old_word, new_word):
+    def is_match(self, old_word, new_word) -> bool:
         if len(new_word) < 3:
             return False
         equal = is_pinyin_equal(old_word[-1], new_word[0])
@@ -375,6 +375,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
 
         item = DefaultChengyuManager.get_by_word(new_word)
         if item:
+            print(item)
             return True
         return False
 
