@@ -7,11 +7,12 @@ import time
 import datetime
 import itertools
 
+from wechaty_puppet import MessageType
+
 from emoji_chengyu.puzzle import gen_puzzle
 from emoji_chengyu.data import common_chengyu_list
+from emoji_chengyu.data import DefaultChengyuManager
 import pypinyin
-
-from wx_sdk import MSGType
 
 from core import GameData
 
@@ -40,7 +41,7 @@ def choice_common_chengyu():
 class TinyApp(object):
     active = False
 
-    MESSAGE_TYPES = (MSGType.RECV_TXT_MSG, )
+    MESSAGE_TYPES = (MessageType.MESSAGE_TYPE_TEXT,)
 
     APP_NAME = None
     APP_DESC = None
@@ -240,7 +241,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         pairs = gen_puzzle()
         pairs = filter(None, pairs)
         pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
-        pairs = itertools.islice(pairs, 0, 60)
+        pairs = itertools.islice(pairs, 0, N)
         pairs = list(pairs)
         pairs.sort(key=lambda pair: pair['emojis'].count(None))
 
@@ -375,11 +376,10 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         if not equal:
             return False
 
-        is_chengyu = ChengyuDataSource.chengyu_map.get(new_word)
-        if not is_chengyu:
-            return False
-
-        return True
+        item = DefaultChengyuManager.get_by_word(new_word)
+        if item:
+            return True
+        return False
 
     def check_match(self, message):
         old_word = self.game['last']
@@ -401,9 +401,10 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         reply_content = '恭喜接龙成功 --> {}'.format(message.content)
         self.ctx.reply_at(reply_content, message.sender_id)
 
-    def find_tip_word(self, old_word):
+    def find_tip_word(self, old_word) -> str:
         tip_words = []
-        for tip_word in ChengyuDataSource.chengyu_map:
+        for item in DefaultChengyuManager.chengyu_list:
+            tip_word: str = item.word
             if self.is_match(old_word, tip_word):
                 if tip_word not in self.game['history']:
                     tip_words.append(tip_word)
