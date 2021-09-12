@@ -437,7 +437,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         elif content == self.TIPS:
             await self.send_tip_word()
         else:
-            if self.check_match(message):
+            if await self.check_match(message):
                 await self.on_matched(message)
                 await self.send_one_case(content)
 
