@@ -463,7 +463,7 @@ class HumanWuGong(ChengyuLoong):
             await self.resend_case()
             return
 
-        if self.check_match(message):
+        if await self.check_match(message):
             await self.on_matched(message)
             await self.send_one_case(content)
 
