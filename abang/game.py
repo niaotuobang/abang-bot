@@ -79,26 +79,25 @@ class TinyApp(object):
     def check_is_stop(self, message):
         return message.content in self.STOP_WORDS
 
-    async def check_active(self, message):
+    def check_active(self, message):
         if self.check_is_start(message):
-            await self.set_active(True, message)
+            self.set_active(True, message)
         elif self.check_is_stop(message):
-            await self.set_active(False, message)
+            self.set_active(False, message)
 
     async def check_next(self, message):
         if self.active:
             await self.on_app_next(message)
 
-    async def set_active(self, active, message):
+    def set_active(self, active, message):
         if self.active == active:
             return
-
         print(self.__class__.__name__, ' self.active, active ', self.active, active)
         self.active = active
         if self.active:
-            await self.on_app_start(message)
+            self.on_app_start(message)
         else:
-            await self.on_app_stop(message)
+            self.on_app_stop(message)
 
     async def on_app_start(self, message):
         pass
@@ -161,7 +160,7 @@ class Hello(TinyApp):
     async def on_app_next(self, message: WechatyMessage):
         reply_content = '让我来邦你'
         await self.ctx.say(reply_content)
-        await self.set_active(False, message)
+        self.set_active(False, message)
 
 
 class NaiveRepeat(TinyApp):
