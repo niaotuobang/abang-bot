@@ -81,9 +81,9 @@ class TinyApp(object):
 
     async def check_active(self, message):
         if self.check_is_start(message):
-            self.set_active(True, message)
+            await self.set_active(True, message)
         elif self.check_is_stop(message):
-            self.set_active(False, message)
+            await self.set_active(False, message)
 
     async def check_next(self, message):
         if self.active:
