@@ -11,7 +11,7 @@ from game import Choice
 from core import ChannelContext
 
 
-def new_channel_ctx(channel_id):
+def new_channel_ctx(channel_id: str) -> ChannelContext:
     apps = [
         Hello(),
         GameTips(),

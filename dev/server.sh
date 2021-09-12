@@ -13,4 +13,4 @@ docker run -ti \
 -e WECHATY_PUPPET_SERVER_PORT \
 -e WECHATY_TOKEN \
 -p "$WECHATY_PUPPET_SERVER_PORT:$WECHATY_PUPPET_SERVER_PORT" \
-wechaty/wechaty:latest
+wechaty/wechaty:0.62

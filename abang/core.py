@@ -1,6 +1,8 @@
 import json
 from cachetools import cached, TTLCache
 
+from wechaty.user import Message, Room
+
 from wx_sdk import WechatBot
 from wx_sdk import MSGType
 
@@ -81,15 +83,15 @@ class PCMessage(object):
 
 class WechatyMessage(object):
 
-    def __init__(self, msg):
+    def __init__(self, msg: Message):
         self.msg = msg
 
     @property
     def content(self):
-        return self.body['content']
+        return self.msg.text()
 
     @property
-    def channel_id(self):
+    def channel_id(self) -> str:
         room = self.msg.room()
         if room is not None:
             channel_id = room.room_id
