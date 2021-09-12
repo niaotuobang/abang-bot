@@ -628,6 +628,16 @@ class Choice(TinyApp):
         await self.set_active(False, message)
 
 
+class Keyword(TinyApp):
+    APP_NAME = '关键词触发'
+    START_WORDS = ('外卖红包', '腿毛红包')
+
+    async def on_app_next(self, message: WechatyMessage):
+        reply_content = '让我来邦你'
+        await self.ctx.say(reply_content, mention_ids=[message.sender_id])
+        await self.set_active(False, message)
+
+
 class Rank(TinyApp):
     APP_NAME = '排行榜'
     LAZY_RANK = '闲人排行榜'
