@@ -150,9 +150,9 @@ class WinnerMixin(object):
         reply_content = '\n'.join(contents)
         return reply_content
 
-    def send_winners(self):
+    async def send_winners(self):
         reply_content = self.make_winner_content()
-        self.ctx.reply(reply_content)
+        await self.ctx.say(reply_content)
 
 
 class Hello(TinyApp):
@@ -230,7 +230,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
     async def on_app_stop(self, _):
         self.game = {}
-        self.send_winners()
+        await self.send_winners()
         self.stop_record_winner()
 
     def make_more_item(self):
@@ -348,7 +348,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         reply_content = ' -> '.join(self.game['history'])
         await self.ctx.say(reply_content)
 
-        self.send_winners()
+        await self.send_winners()
         self.stop_record_winner()
 
     async def send_one_case(self, word):

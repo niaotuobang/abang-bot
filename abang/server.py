@@ -35,6 +35,8 @@ class ABangBot(Wechaty):
         """
         listen for message event
         """
+        if msg.is_self():
+            return
         message: WechatyMessage = WechatyMessage(msg)
         ctx: ChannelContext = get_channel_ctx(message)
         ctx.set_bot(self)
