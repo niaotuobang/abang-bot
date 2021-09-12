@@ -30,7 +30,7 @@ class ChannelContext(object):
     def set_bot(self, bot: Wechaty):
         self.bot = bot
 
-    def get_member_nick(self, wx_id) -> str:
+    async def get_member_nick(self, wx_id) -> str:
         member: Contact = self.bot.Contact.load(wx_id)
         await member.ready()
         if self.is_group:
