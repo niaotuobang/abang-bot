@@ -30,26 +30,21 @@ class ChannelContext(object):
     def set_bot(self, bot: Wechaty):
         self.bot = bot
 
-    @cached(cache=TTLCache(maxsize=500, ttl=86400))
-    def get_member_nick(self, wx_id):
-        raise NotImplementedError
-        '''
-        resp = self.wechat_bot.get_member_nick(wx_id, self.channel_id)
-        content = resp['content']
-        content_json = json.loads(content)
-        return content_json['nick']
-        '''
+    def get_member_nick(self, wx_id) -> str:
+        member: Contact = self.bot.Contact.load(wx_id)
+        await member.ready()
+        if self.is_group:
+            room: Room = self.bot.Room.load(self.channel_id)
+            await room.ready()
+            return await room.alias(member)
+        return member.name
 
-    def get_channel_member_ids(self):
-        raise NotImplementedError
-        '''
-        resp = self.wechat_bot.get_memberid()
-        content = resp['content']
-        for info in content:
-            if info['room_id'] == self.channel_id:
-                return info['member']
-        return []
-        '''
+    async def get_channel_member_ids(self):
+        if not self.is_group:
+            return []
+        room: Room = self.bot.Room.load(self.channel_id)
+        await room.ready()
+        return await room.member_list()
 
     async def say(self,
                   some_thing: Union[str, Contact, FileBox, MiniProgram, UrlLink],
