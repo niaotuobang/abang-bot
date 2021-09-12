@@ -1,7 +1,9 @@
 import json
 from cachetools import cached, TTLCache
+from typing import Optional
 
 from wechaty.user import Message, Room
+from wechaty import Wechaty, Contact
 
 from wx_sdk import WechatBot
 from wx_sdk import MSGType
@@ -19,6 +21,10 @@ class ChannelContext(object):
         self.channel_id = channel_id
         self.apps = apps or []
         self.winner = GameData()
+        self._bot: Optional[Wechaty]= None
+
+    def set_bot(self, bot: Wechaty):
+        self._bot = bot
 
     @cached(cache=TTLCache(maxsize=500, ttl=86400))
     def get_member_nick(self, wx_id):

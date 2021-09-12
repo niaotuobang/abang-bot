@@ -1,5 +1,6 @@
 import asyncio
 from typing import List, Optional, Union
+import logging
 
 from wechaty_puppet import FileBox  # type: ignore
 
@@ -25,11 +26,19 @@ def get_channel_ctx(channel_id: str) -> ChannelContext:
 class ABangBot(Wechaty):
 
     async def on_message(self, msg: Message):
+        try:
+            self._on_message(msg)
+        except Exception as e:
+            logging.error(e, exc_info=True)
+
+    def _on_message(self, msg: Message):
         """
         listen for message event
         """
         message: WechatyMessage = WechatyMessage(msg)
         ctx: ChannelContext = get_channel_ctx(message.channel_id)
+        ctx.set_bot(self)
+
         for app in ctx.apps:
             if app.check_need_handle(message):
                 app.check_active(message)
