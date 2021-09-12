@@ -237,7 +237,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         N = 60
         pairs = gen_puzzle()
         pairs = filter(None, pairs)
-        pairs = filter(lambda pair: len(pair['words']) == 4, pairs)
+        pairs = filter(lambda pair: len(pair.word) == 4, pairs)
         pairs = itertools.islice(pairs, 0, N)
         pairs = list(pairs)
         pairs.sort(key=lambda pair: pair['emojis'].count(None))
