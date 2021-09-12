@@ -51,19 +51,18 @@ class ChannelContext(object):
         return []
         '''
 
-    def get_conversation(self) -> Union[Room, Contact]:
-        if self.is_group:
-            return self.bot.Room.load(self.channel_id)
-        return self.bot.Contact.load(self.channel_id)
-
     async def say(self,
                   some_thing: Union[str, Contact, FileBox, MiniProgram, UrlLink],
                   mention_ids: Optional[List[str]] = None
                   ) -> Union[None, Message]:
-
-        conversation: Union[Room, Contact] = self.get_conversation()
-        await conversation.ready()
-        await conversation.say(some_thing=some_thing, mention_ids=mention_ids)
+        if self.is_group:
+            room: Room = self.bot.Room.load(self.channel_id)
+            await room.ready()
+            await room.say(some_thing=some_thing, mention_ids=mention_ids)
+        else:
+            contact: Contact = self.bot.Contact.load(self.channel_id)
+            await contact.ready()
+            await contact.say(some_thing)
 
     def collect_winner(self, app_name, wx_id, count=1):
         if app_name not in self.winner:
