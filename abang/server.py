@@ -31,7 +31,7 @@ class ABangBot(Wechaty):
         except Exception as e:
             logging.error(e, exc_info=True)
 
-    def _on_message(self, msg: Message):
+    async def _on_message(self, msg: Message):
         """
         listen for message event
         """
