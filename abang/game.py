@@ -240,7 +240,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         pairs = filter(lambda pair: len(pair.word) == 4, pairs)
         pairs = itertools.islice(pairs, 0, N)
         pairs = list(pairs)
-        pairs.sort(key=lambda pair: pair['emojis'].count(None))
+        pairs.sort(key=lambda pair: pair.emojis.count(None))
 
         pairs2 = []
         used_words = {}
