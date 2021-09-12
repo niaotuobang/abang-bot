@@ -79,34 +79,34 @@ class TinyApp(object):
     def check_is_stop(self, message):
         return message.content in self.STOP_WORDS
 
-    def check_active(self, message):
+    async def check_active(self, message):
         if self.check_is_start(message):
             self.set_active(True, message)
         elif self.check_is_stop(message):
             self.set_active(False, message)
 
-    def check_next(self, message):
+    async def check_next(self, message):
         if self.active:
-            self.on_app_next(message)
+            await self.on_app_next(message)
 
-    def set_active(self, active, message):
+    async def set_active(self, active, message):
         if self.active == active:
             return
 
         print(self.__class__.__name__, ' self.active, active ', self.active, active)
         self.active = active
         if self.active:
-            self.on_app_start(message)
+            await self.on_app_start(message)
         else:
-            self.on_app_stop(message)
+            await self.on_app_stop(message)
 
-    def on_app_start(self, message):
+    async def on_app_start(self, message):
         pass
 
-    def on_app_stop(self, message):
+    async def on_app_stop(self, message):
         pass
 
-    def on_app_next(self, message):
+    async def on_app_next(self, message):
         pass
 
 
@@ -158,7 +158,7 @@ class Hello(TinyApp):
     APP_NAME = '打招呼'
     START_WORDS = ('阿邦', '毛毛', '阿邦你好', '邦邦')
 
-    def on_app_next(self, message: WechatyMessage):
+    async def on_app_next(self, message: WechatyMessage):
         reply_content = '让我来邦你'
         await message.msg.say(reply_content, message.sender_id)
         self.set_active(False, message)

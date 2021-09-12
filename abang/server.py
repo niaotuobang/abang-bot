@@ -41,8 +41,8 @@ class ABangBot(Wechaty):
 
         for app in ctx.apps:
             if app.check_need_handle(message):
-                app.check_active(message)
-                app.check_next(message)
+                await app.check_active(message)
+                await app.check_next(message)
 
 
 if __name__ == "__main__":
