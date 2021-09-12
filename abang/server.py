@@ -14,12 +14,12 @@ from internal import new_channel_ctx
 channel_db = {}
 
 
-def get_channel_ctx(channel_id: str) -> ChannelContext:
-    if channel_id in channel_db:
-        return channel_db[channel_id]
+def get_channel_ctx(message: WechatyMessage) -> ChannelContext:
+    if message.channel_id in channel_db:
+        return channel_db[message.channel_id]
 
-    ctx = new_channel_ctx(channel_id)
-    channel_db[channel_id] = ctx
+    ctx = new_channel_ctx(message.channel_id, message.is_group)
+    channel_db[message.channel_id] = ctx
     return ctx
 
 
@@ -36,7 +36,7 @@ class ABangBot(Wechaty):
         listen for message event
         """
         message: WechatyMessage = WechatyMessage(msg)
-        ctx: ChannelContext = get_channel_ctx(message.channel_id)
+        ctx: ChannelContext = get_channel_ctx(message)
         ctx.set_bot(self)
 
         for app in ctx.apps:

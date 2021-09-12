@@ -1,6 +1,14 @@
 import json
 from cachetools import cached, TTLCache
-from typing import Optional
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Union,
+    TYPE_CHECKING
+)
 
 from wechaty.user import Message, Room
 from wechaty import Wechaty, Contact
@@ -12,14 +20,15 @@ class GameData(dict):
 
 class ChannelContext(object):
 
-    def __init__(self, channel_id, apps=None):
+    def __init__(self, channel_id: str, is_group: bool, apps=None):
         self.channel_id = channel_id
+        self.is_group = is_group
         self.apps = apps or []
         self.winner = GameData()
-        self._bot: Optional[Wechaty] = None
+        self.bot: Optional[Wechaty] = None
 
     def set_bot(self, bot: Wechaty):
-        self._bot = bot
+        self.bot = bot
 
     @cached(cache=TTLCache(maxsize=500, ttl=86400))
     def get_member_nick(self, wx_id):
@@ -40,22 +49,6 @@ class ChannelContext(object):
             if info['room_id'] == self.channel_id:
                 return info['member']
         return []
-        '''
-
-    def reply(self, reply_content):
-        raise NotImplementedError
-        '''
-        self.wechat_bot.send_txt_msg(to=self.channel_id, content=reply_content)
-        '''
-
-    def reply_at(self, reply_content, wx_id):
-        # nickname = self.get_member_nick(wx_id)
-        '''
-        self.wechat_bot.send_at_msg(
-            wx_id=wx_id,
-            room_id=self.channel_id,
-            content=reply_content,
-            nickname=nickname)
         '''
 
     def collect_winner(self, app_name, wx_id, count=1):

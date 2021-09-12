@@ -15,7 +15,7 @@ from emoji_chengyu.data import DefaultChengyuManager
 import pypinyin
 
 from core import GameData
-
+from core import ChannelContext, WechatyMessage
 
 def is_pinyin_equal(wordA, wordB, strict=False):
     assert len(wordA) == 1
@@ -158,13 +158,9 @@ class Hello(TinyApp):
     APP_NAME = '打招呼'
     START_WORDS = ('阿邦', '毛毛', '阿邦你好', '邦邦')
 
-    def on_app_next(self, message):
+    def on_app_next(self, message: WechatyMessage):
         reply_content = '让我来邦你'
-        if message.is_group:
-            self.ctx.reply_at(reply_content, message.sender_id)
-        else:
-            self.ctx.reply(reply_content)
-
+        message.msg.say(reply_content, message.sender_id)
         self.set_active(False, message)
 
 

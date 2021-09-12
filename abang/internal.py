@@ -11,7 +11,7 @@ from game import Choice
 from core import ChannelContext
 
 
-def new_channel_ctx(channel_id: str) -> ChannelContext:
+def new_channel_ctx(channel_id: str, is_group: bool) -> ChannelContext:
     apps = [
         Hello(),
         GameTips(),
@@ -23,7 +23,7 @@ def new_channel_ctx(channel_id: str) -> ChannelContext:
         Choice(),
     ]
 
-    ctx = ChannelContext(channel_id=channel_id, apps=apps)
+    ctx = ChannelContext(channel_id=channel_id, is_group=is_group, apps=apps)
     for app in apps:
         app.set_ctx(ctx)
 
