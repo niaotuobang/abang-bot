@@ -160,7 +160,7 @@ class Hello(TinyApp):
 
     def on_app_next(self, message: WechatyMessage):
         reply_content = '让我来邦你'
-        message.msg.say(reply_content, message.sender_id)
+        await message.msg.say(reply_content, message.sender_id)
         self.set_active(False, message)
 
 
