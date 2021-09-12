@@ -28,7 +28,6 @@ class ABangBot(Wechaty):
         """
         listen for message event
         """
-        print(msg)
         message: WechatyMessage = WechatyMessage(msg)
         ctx: ChannelContext = get_channel_ctx(message.channel_id)
         for app in ctx.apps:
