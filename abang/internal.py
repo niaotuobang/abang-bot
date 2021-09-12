@@ -6,6 +6,7 @@ from game import ChengyuLoong
 from game import HumanWuGong
 from game import SevenSeven
 from game import Choice
+from game import Keyword
 
 
 from core import ChannelContext
@@ -21,6 +22,7 @@ def new_channel_ctx(channel_id: str, is_group: bool) -> ChannelContext:
         HumanWuGong(),
         SevenSeven(),
         Choice(),
+        Keyword(),
     ]
 
     ctx = ChannelContext(channel_id=channel_id, is_group=is_group, apps=apps)

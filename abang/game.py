@@ -1,3 +1,5 @@
+import io
+import json
 from collections import Counter
 from functools import cached_property
 import random
@@ -632,8 +634,24 @@ class Keyword(TinyApp):
     APP_NAME = '关键词触发'
     START_WORDS = ('外卖红包', '腿毛红包')
 
+    def __init__(self):
+        super().__init__()
+        with io.open('config.json', 'r') as f:
+            config = json.load(f)
+        self.rules = config['Keyword']['rules']
+        keywords = []
+        keyword_map = {}
+        for rule in self.rules:
+            for keyword in rule['keywords']:
+                if keyword in keyword_map:
+                    continue
+                keywords.extend(keyword)
+                keyword_map[keyword] = rule
+        self.START_WORDS = tuple(keywords)
+        self.keyword_map = keyword_map
+
     async def on_app_next(self, message: WechatyMessage):
-        reply_content = '让我来邦你'
+        reply_content = message.content
         await self.ctx.say(reply_content, mention_ids=[message.sender_id])
         await self.set_active(False, message)
 
