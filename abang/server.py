@@ -27,7 +27,7 @@ class ABangBot(Wechaty):
 
     async def on_message(self, msg: Message):
         try:
-            self._on_message(msg)
+            await self._on_message(msg)
         except Exception as e:
             logging.error(e, exc_info=True)
 
