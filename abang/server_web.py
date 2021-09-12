@@ -15,7 +15,7 @@ channel_db = {}
 
 
 def get_channel_ctx(channel_id: str) -> ChannelContext:
-    if channel_id not in channel_db:
+    if channel_id in channel_db:
         return channel_db[channel_id]
 
     ctx = new_channel_ctx(channel_id)
