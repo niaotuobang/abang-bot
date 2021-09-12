@@ -1,5 +1,4 @@
-import json
-from cachetools import cached, TTLCache
+from collections import defaultdict
 from typing import (
     Any,
     Callable,
@@ -61,7 +60,7 @@ class ChannelContext(object):
 
     def collect_winner(self, app_name, wx_id, count=1):
         if app_name not in self.winner:
-            self.winner[app_name] = {}
+            self.winner[app_name] = defaultdict(int)
         self.winner[app_name][wx_id] += count
 
 
