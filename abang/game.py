@@ -17,7 +17,8 @@ import pypinyin
 from core import GameData
 from core import ChannelContext, WechatyMessage
 
-def is_pinyin_equal(wordA, wordB, strict=False):
+
+def is_pinyin_equal(wordA, wordB, strict=False) -> bool:
     assert len(wordA) == 1
     assert len(wordB) == 1
     if wordA == wordB:
@@ -159,7 +160,7 @@ class Hello(TinyApp):
 
     async def on_app_next(self, message: WechatyMessage):
         reply_content = '让我来邦你'
-        await self.ctx.say(reply_content)
+        await self.ctx.say(reply_content, mention_ids=[message.sender_id])
         await self.set_active(False, message)
 
 
