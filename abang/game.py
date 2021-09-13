@@ -11,6 +11,7 @@ import itertools
 from typing import Optional
 
 from wechaty_puppet import MessageType
+from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
 
 from emoji_chengyu.puzzle import gen_puzzle
 from emoji_chengyu.data import common_chengyu_list
@@ -651,8 +652,20 @@ class Keyword(TinyApp):
         self.keyword_map = keyword_map
 
     async def on_app_next(self, message: WechatyMessage):
-        reply_content = message.content
-        await self.ctx.say(reply_content, mention_ids=[message.sender_id])
+        keyword = message.content
+        rule : Optional[dict] = self.keyword_map.get(keyword)
+        contents = []
+        if rule:
+           contents = rule.get('contents')
+
+        if contents:
+            for content in contents:
+                if content['type'] == 'content':
+                    await self.ctx.say(content['message'])
+                elif content['type'] == 'file':
+                    file: FileBox = FileBox.from_file(content['message'], name=content.get('name'))
+                    await self.ctx.say(file)
+
         await self.set_active(False, message)
 
 
