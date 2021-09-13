@@ -646,7 +646,7 @@ class Keyword(TinyApp):
             for keyword in rule['keywords']:
                 if keyword in keyword_map:
                     continue
-                keywords.extend(keyword)
+                keywords.append(keyword)
                 keyword_map[keyword] = rule
         self.START_WORDS = tuple(keywords)
         self.keyword_map = keyword_map
