@@ -653,10 +653,11 @@ class Keyword(TinyApp):
 
     async def on_app_next(self, message: WechatyMessage):
         keyword = message.content
-        rule : Optional[dict] = self.keyword_map.get(keyword)
-        contents = []
+        rule: Optional[dict] = self.keyword_map.get(keyword)
         if rule:
-           contents = rule.get('contents')
+            contents = rule.get('contents')
+        else:
+            contents = []
 
         if contents:
             for content in contents:
