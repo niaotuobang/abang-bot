@@ -29,6 +29,16 @@ class ChannelContext(object):
     def set_bot(self, bot: Wechaty):
         self.bot = bot
 
+    async def get_channel(self) -> Union[Room, Contact]:
+        if self.is_group:
+            room: Room = self.bot.Room.load(self.channel_id)
+            await room.ready()
+            return room
+        else:
+            contact: Contact = self.bot.Contact.load(self.channel_id)
+            await contact.ready()
+            return contact
+
     async def get_member_nick(self, wx_id) -> str:
         member: Contact = self.bot.Contact.load(wx_id)
         await member.ready()

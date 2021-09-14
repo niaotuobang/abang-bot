@@ -8,10 +8,10 @@ import re
 import time
 import datetime
 import itertools
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 
 from wechaty_puppet import MessageType
-from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
+from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink, Room
 
 from emoji_chengyu.puzzle import gen_puzzle
 from emoji_chengyu.data import common_chengyu_list
@@ -58,7 +58,7 @@ class TinyApp(object):
     def __init__(self):
         self.ctx = None
 
-    def set_ctx(self, ctx):
+    def set_ctx(self, ctx: ChannelContext):
         self.ctx = ctx
 
     @cached_property
@@ -211,10 +211,8 @@ class NaiveRepeat(TinyApp):
                 repeat = True
 
         if repeat:
-            some_thing: Any = content
-            if message.msg_type == MessageType.MESSAGE_TYPE_IMAGE:
-                some_thing = await message.msg.to_image()
-            await self.ctx.say(some_thing)
+            channel: Union[Room, Contact] = await self.ctx.get_channel()
+            await message.msg.forward(channel)
 
 
 class EmojiChengyu(TinyApp, WinnerMixin):
