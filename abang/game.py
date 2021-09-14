@@ -213,7 +213,7 @@ class NaiveRepeat(TinyApp):
         if repeat:
             some_thing: Any = content
             if message.msg_type == MessageType.MESSAGE_TYPE_IMAGE:
-                some_thing = message.msg.to_recalled()
+                some_thing = await message.msg.to_image()
             await self.ctx.say(some_thing)
 
 
