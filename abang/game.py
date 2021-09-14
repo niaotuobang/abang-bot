@@ -596,15 +596,15 @@ class Choice(TinyApp):
     APP_DESC = '输入「抽N个人xxx」进行抽奖'
     CHOICE_RE = re.compile(r'抽([\t\d ]+)个?人(\w+)?')
 
-    def check_is_start(self, message) -> bool:
+    def check_is_start(self, message: WechatyMessage) -> bool:
         flag = self.CHOICE_RE.search(message.content)
-        print('choice', flag, bool(flag))
+        print('choice', flag, bool(flag), self.active)
         return bool(flag)
 
     def parse_N_and_XX(self, message):
         match = self.CHOICE_RE.search(message.content)
         if not match:
-            return
+            return None, None
         N, XX = match.groups()
         N = N.replace(' ', '').replace('\t', '').strip()
         XX = XX.strip() if XX else ''
@@ -612,6 +612,8 @@ class Choice(TinyApp):
 
     async def on_app_next(self, message: WechatyMessage):
         N, XX = self.parse_N_and_XX(message)
+        if not N or not XX:
+            return
         members = await self.ctx.get_channel_member_ids()
         if len(members) < N:
             await self.ctx.say('抽奖人数超过群聊人数, 请重新输出', [message.sender_id])
@@ -624,13 +626,13 @@ class Choice(TinyApp):
             self.NEXT_LINE,
         ]
 
-        mention_ids = []
+        # mention_ids = []
         for member in members2:
             reply_contents.append(f'@{member.name}')
-            mention_ids.append(member.contact_id)
+            # mention_ids.append(member.contact_id)
 
         reply_content = '\n'.join(reply_contents)
-        await self.ctx.say(reply_content, mention_ids=mention_ids)
+        await self.ctx.say(reply_content)
         await self.set_active(False, message)
 
 
