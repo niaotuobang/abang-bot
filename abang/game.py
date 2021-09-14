@@ -211,8 +211,7 @@ class NaiveRepeat(TinyApp):
                 repeat = True
 
         if repeat:
-            channel: Union[Room, Contact] = await self.ctx.get_channel()
-            await message.msg.forward(channel)
+            await self.ctx.repeat(message.msg)
 
 
 class EmojiChengyu(TinyApp, WinnerMixin):

@@ -11,6 +11,7 @@ from typing import (
 
 from wechaty.user import Message, Room
 from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
+from wechaty_grpc.wechaty.puppet import MessageType
 
 
 class GameData(dict):
@@ -54,6 +55,14 @@ class ChannelContext(object):
         room: Room = self.bot.Room.load(self.channel_id)
         await room.ready()
         return await room.member_list()
+
+    async def repeat(self, msg :Message):
+        msg_type: MessageType = msg.type()
+        if msg_type == MessageType.MESSAGE_TYPE_TEXT:
+            await self.say(msg.text())
+        elif msg_type in (MessageType.MESSAGE_TYPE_IMAGE, MessageType.MESSAGE_TYPE_EMOTICON):
+            file: FileBox = await msg.to_file_box()
+            await self.say(file)
 
     async def say(self,
                   some_thing: Union[str, Contact, FileBox, MiniProgram, UrlLink],
