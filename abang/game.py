@@ -596,11 +596,15 @@ class Choice(TinyApp):
     APP_DESC = '输入「抽N个人xxx」进行抽奖'
     CHOICE_RE = re.compile(r'抽([\t\d ]+)个?人(\w+)?')
 
-    def check_is_start(self, message):
-        return bool(self.CHOICE_RE.search(message.content))
+    def check_is_start(self, message) -> bool:
+        flag = self.CHOICE_RE.search(message.content)
+        print('choice', flag, bool(flag))
+        return bool(flag)
 
     def parse_N_and_XX(self, message):
         match = self.CHOICE_RE.search(message.content)
+        if not match:
+            return
         N, XX = match.groups()
         N = N.replace(' ', '').replace('\t', '').strip()
         XX = XX.strip() if XX else ''
