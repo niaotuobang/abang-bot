@@ -1,3 +1,4 @@
+import base64
 from collections import defaultdict
 from typing import (
     Any,
@@ -12,10 +13,18 @@ from typing import (
 from wechaty.user import Message, Room
 from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
 from wechaty_grpc.wechaty.puppet import MessageType
+from wechaty_puppet.file_box import FileBoxType
 
 
 class GameData(dict):
     pass
+
+
+def adapter_file_box(file: FileBox) -> FileBox:
+    if file.type() == FileBoxType.Stream:
+        content: str = base64.b64encode(file.stream)
+        return FileBox.from_base64(content, file.name)
+    return file
 
 
 class ChannelContext(object):
@@ -62,7 +71,7 @@ class ChannelContext(object):
             await self.say(msg.text())
         elif msg_type in (MessageType.MESSAGE_TYPE_IMAGE,):
             file: FileBox = await msg.to_file_box()
-            await file.ready()
+            file: FileBox = adapter_file_box(file)
             await self.say(file)
 
     async def say(self,
