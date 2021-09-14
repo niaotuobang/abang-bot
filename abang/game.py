@@ -8,7 +8,7 @@ import re
 import time
 import datetime
 import itertools
-from typing import Optional
+from typing import Optional, List
 
 from wechaty_puppet import MessageType
 from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
@@ -511,7 +511,7 @@ class SevenSeven(TinyApp):
         reply_content = '''默认全员参加,抽中了奶茶但是对方不愿付款的可以找管委会(苏哥陶陶大王文君)领一杯蜜雪冰城。\n- - - - - - - - - - - -\n抽奖规则: 发送 七夕抽奖 或 七夕抽奖我要一杯XX奶茶 即可参与抽奖，即时开奖。兑奖时间截止七夕当晚22点。'''
         await self.ctx.say(reply_content)
 
-        member_ids = self.ctx.get_channel_member_ids()
+        member_ids = await self.ctx.get_channel_member_ids()
         # 排除机器人
         member_ids2 = []
         for member_id in member_ids:
@@ -610,28 +610,27 @@ class Choice(TinyApp):
         XX = XX.strip() if XX else ''
         return int(N), XX
 
-    async def on_app_next(self, message):
+    async def on_app_next(self, message: WechatyMessage):
         N, XX = self.parse_N_and_XX(message)
-        member_ids = self.ctx.get_channel_member_ids()
-        if len(member_ids) < N:
+        members = await self.ctx.get_channel_member_ids()
+        if len(members) < N:
             await self.ctx.say('抽奖人数超过群聊人数, 请重新输出', [message.sender_id])
             return
 
-        member_ids2 = random.sample(member_ids, N)
-
-        sender = self.ctx.get_member_nick(message.sender_id)
+        members2: List[Contact] = random.sample(members, N)
         reply_contents = [
-            f'@{sender} 发起的抽奖结果公示',
+            f'@{message.msg.talker().name} 发起的抽奖结果公示',
             f'抽奖详情: {N}人, {XX}',
             self.NEXT_LINE,
         ]
 
-        for wx_id in member_ids2:
-            nickname = self.ctx.get_member_nick(wx_id)
-            reply_contents.append(f'@{nickname}')
+        mention_ids = []
+        for member in members2:
+            reply_contents.append(f'@{member.name}')
+            mention_ids.append(member.contact_id)
 
         reply_content = '\n'.join(reply_contents)
-        await self.ctx.say(reply_content)
+        await self.ctx.say(reply_content, mention_ids=mention_ids)
         await self.set_active(False, message)
 
 
