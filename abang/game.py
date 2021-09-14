@@ -8,7 +8,7 @@ import re
 import time
 import datetime
 import itertools
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from wechaty_puppet import MessageType
 from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
@@ -172,7 +172,9 @@ class NaiveRepeat(TinyApp):
 
     APP_NAME = '复读机'
     START_WORDS = ('开始复读', '阿邦复读', '阿邦开始复读')
-    STOP_WORDS = ('结束复读', '别复读了')
+    STOP_WORDS = ('结束复读', '别复读了', '阿邦停止复读', '阿邦结束复读')
+
+    MESSAGE_TYPES = (MessageType.MESSAGE_TYPE_TEXT, MessageType.MESSAGE_TYPE_EMOTICON, MessageType.MESSAGE_TYPE_IMAGE)
 
     STUPID_MODE = '弱智复读'
     RANDOM_MODE = '随机复读'
@@ -189,7 +191,7 @@ class NaiveRepeat(TinyApp):
             'mode': self.MODES[1],
         }
 
-    async def on_app_next(self, message):
+    async def on_app_next(self, message: WechatyMessage):
         content = message.content
         if message.content in self.MODES:
             self.game['mode'] = content
@@ -209,7 +211,10 @@ class NaiveRepeat(TinyApp):
                 repeat = True
 
         if repeat:
-            await self.ctx.say(message.content)
+            some_thing: Any = content
+            if message.msg_type == MessageType.MESSAGE_TYPE_IMAGE:
+                some_thing = message.msg.to_recalled()
+            await self.ctx.say(some_thing)
 
 
 class EmojiChengyu(TinyApp, WinnerMixin):
