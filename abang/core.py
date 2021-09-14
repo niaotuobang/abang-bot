@@ -56,12 +56,13 @@ class ChannelContext(object):
         await room.ready()
         return await room.member_list()
 
-    async def repeat(self, msg :Message):
+    async def repeat(self, msg: Message):
         msg_type: MessageType = msg.type()
         if msg_type == MessageType.MESSAGE_TYPE_TEXT:
             await self.say(msg.text())
-        elif msg_type in (MessageType.MESSAGE_TYPE_IMAGE, MessageType.MESSAGE_TYPE_EMOTICON):
+        elif msg_type in (MessageType.MESSAGE_TYPE_IMAGE,):
             file: FileBox = await msg.to_file_box()
+            await file.ready()
             await self.say(file)
 
     async def say(self,
