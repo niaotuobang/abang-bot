@@ -9,7 +9,7 @@ import time
 import datetime
 import itertools
 from typing import Optional, List
-c
+
 from wechaty_puppet import MessageType
 from wechaty import Contact, FileBox
 
