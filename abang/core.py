@@ -130,22 +130,22 @@ class WechatyMessage(object):
         return channel_id
 
     @property
-    def sender_id(self):
+    def sender_id(self) -> str:
         talker = self.msg.talker()
         return talker.contact_id
 
     @property
-    def is_group(self):
+    def is_group(self) -> bool:
         return self.msg.room() is not None
 
     @property
-    def is_text_msg(self):
-        return self.msg.type() == 1  # TODO use const
+    def is_text_msg(self) -> bool:
+        return self.msg.type() == MessageType.MESSAGE_TYPE_TEXT
 
     @property
-    def msg_type(self):
+    def msg_type(self) -> MessageType:
         return self.msg.type()
 
     @property
-    def is_heartbeat(self):
+    def is_heartbeat(self) -> bool:
         return False

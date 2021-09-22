@@ -9,7 +9,7 @@ import time
 import datetime
 import itertools
 from typing import Optional, List
-
+c
 from wechaty_puppet import MessageType
 from wechaty import Contact, FileBox
 
@@ -605,7 +605,6 @@ class Choice(TinyApp):
 
     def check_is_start(self, message: WechatyMessage) -> bool:
         flag = self.CHOICE_RE.search(message.content)
-        print('choice', flag, bool(flag), self.active)
         return bool(flag)
 
     def parse_N_and_XX(self, message):
