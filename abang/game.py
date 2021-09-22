@@ -130,7 +130,7 @@ class WinnerMixin(object):
         for index, item in enumerate(counter.most_common(self.WIN_TOP)):
             winner_id = item[0]
             count = item[1]
-            nickname = self.ctx.get_member_nick(winner_id)
+            nickname = await self.ctx.get_member_nick(winner_id)
             content = f'{medals[index]} 第 {index + 1} 名: @{nickname} (赢了 {count} 次)'
             contents.append(content)
 
@@ -506,7 +506,7 @@ class SevenSeven(TinyApp):
         # 排除机器人
         member_ids2 = []
         for member_id in member_ids:
-            nickname = self.ctx.get_member_nick(member_id)
+            nickname = await self.ctx.get_member_nick(member_id)
             if nickname not in self.EXCLUDE_WX_NAMES:
                 member_ids2.append(member_id)
 
@@ -536,8 +536,8 @@ class SevenSeven(TinyApp):
 
         gift = self.game['matched'][wx_id]
         giver_id, gift_content = gift
-        getter = self.ctx.get_member_nick(wx_id)
-        giver = self.ctx.get_member_nick(giver_id)
+        getter = await self.ctx.get_member_nick(wx_id)
+        giver = await self.ctx.get_member_nick(giver_id)
         reply_content = f'@{getter} 抽中 @{giver} 送出的 一杯{gift_content}'
         return reply_content
 
