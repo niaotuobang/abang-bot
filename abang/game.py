@@ -14,17 +14,12 @@ from wechaty_puppet import MessageType
 from wechaty import Contact, FileBox
 
 from emoji_chengyu.puzzle import gen_puzzle
-from emoji_chengyu.data import common_chengyu_list
 from emoji_chengyu.data import DefaultChengyuManager
 
 from core import GameData
 from core import ChannelContext, WechatyMessage
 from utils.content import is_pinyin_equal, is_wechat_emoji_equal
-
-
-def choice_common_chengyu():
-    item = choice(common_chengyu_list)
-    return item.word
+from utils.chengyu import ChengyuItem, choice_common_chengyu
 
 
 class TinyApp(object):
@@ -68,7 +63,7 @@ class TinyApp(object):
     def check_is_stop(self, message):
         return message.content in self.STOP_WORDS
 
-    async def check_active(self, message):
+    async def check_active(self, message: WechatyMessage):
         if self.check_is_start(message):
             await self.set_active(True, message)
         elif self.check_is_stop(message):
@@ -122,7 +117,7 @@ class WinnerMixin(object):
             return
         self.winner[wx_id] = self.winner.get(wx_id, 0) + 1
 
-    def make_winner_content(self):
+    async def make_winner_content(self):
         medals = ['🏅', '🥈', '🥉']
 
         contents = []
@@ -138,7 +133,7 @@ class WinnerMixin(object):
         return reply_content
 
     async def send_winners(self):
-        reply_content = self.make_winner_content()
+        reply_content = await self.make_winner_content()
         await self.ctx.say(reply_content)
 
 
@@ -332,8 +327,8 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         self.game['count'] = 0
         self.game['history'] = []
 
-        new_word = choice_common_chengyu()
-        await self.send_one_case(new_word)
+        new_item: ChengyuItem = choice_common_chengyu()
+        await self.send_one_case(new_item.word)
 
     async def on_app_stop(self, message):
         reply_content = '已结束, 本次接龙长度 {}'.format(self.game['count'])
@@ -345,7 +340,7 @@ class ChengyuLoong(TinyApp, WinnerMixin):
         await self.send_winners()
         self.stop_record_winner()
 
-    async def send_one_case(self, word):
+    async def send_one_case(self, word: str):
         index = self.game['count'] + 1
         question = '第 {} 条: 「{}」'.format(index, word)
         await self.ctx.say(question)
