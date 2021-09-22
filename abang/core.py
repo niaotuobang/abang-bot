@@ -1,5 +1,6 @@
 import base64
 from collections import defaultdict
+from functools import cached_property
 from typing import (
     List,
     Optional,
@@ -97,18 +98,17 @@ class WechatyMessage(object):
     def __init__(self, msg: Message):
         self.msg = msg
 
-    @property
+    @cached_property
     def content(self) -> str:
         if self.is_emoji_msg:
             return ""
         if self.is_text_msg:
             content = self.msg.text()
-            new_content = check_and_clean_web_emoji_img(content)
-            print(new_content)
-            return content
+            clean_content = check_and_clean_web_emoji_img(content)
+            return clean_content
         return ""
 
-    @property
+    @cached_property
     def is_emoji_msg(self) -> bool:
         if self.msg_type == MessageType.MESSAGE_TYPE_EMOTICON:
             return True
@@ -117,7 +117,7 @@ class WechatyMessage(object):
                 return True
         return False
 
-    @property
+    @cached_property
     def channel_id(self) -> str:
         room = self.msg.room()
         if room is not None:
@@ -129,23 +129,23 @@ class WechatyMessage(object):
             channel_id = talker.contact_id
         return channel_id
 
-    @property
+    @cached_property
     def sender_id(self) -> str:
         talker = self.msg.talker()
         return talker.contact_id
 
-    @property
+    @cached_property
     def is_group(self) -> bool:
         return self.msg.room() is not None
 
-    @property
+    @cached_property
     def is_text_msg(self) -> bool:
         return self.msg.type() == MessageType.MESSAGE_TYPE_TEXT
 
-    @property
+    @cached_property
     def msg_type(self) -> MessageType:
         return self.msg.type()
 
-    @property
+    @cached_property
     def is_heartbeat(self) -> bool:
         return False
