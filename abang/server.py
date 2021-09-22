@@ -1,11 +1,8 @@
 import asyncio
-from typing import List, Optional, Union
 import logging
 
-from wechaty_puppet import FileBox  # type: ignore
-
-from wechaty import Wechaty, Contact
-from wechaty.user import Message, Room
+from wechaty import Wechaty
+from wechaty.user import Message
 
 from core import ChannelContext, WechatyMessage
 from internal import new_channel_ctx

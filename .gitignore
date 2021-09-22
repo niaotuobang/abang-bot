@@ -1,6 +1,5 @@
 # runtime
-abang/config.json
-abang/*.jpg
+resource
 logs/
 
 # IDEA

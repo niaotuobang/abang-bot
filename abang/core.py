@@ -1,19 +1,18 @@
 import base64
 from collections import defaultdict
 from typing import (
-    Any,
-    Callable,
-    Dict,
     List,
     Optional,
     Union,
-    TYPE_CHECKING
 )
 
 from wechaty.user import Message, Room
 from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink
 from wechaty_grpc.wechaty.puppet import MessageType
 from wechaty_puppet.file_box import FileBoxType
+
+from utils.content import check_and_clean_web_emoji_img
+from utils.content import is_web_wechat_emoji
 
 
 class GameData(dict):
@@ -99,8 +98,24 @@ class WechatyMessage(object):
         self.msg = msg
 
     @property
-    def content(self):
-        return self.msg.text()
+    def content(self) -> str:
+        if self.is_emoji_msg:
+            return ""
+        if self.is_text_msg:
+            content = self.msg.text()
+            new_content = check_and_clean_web_emoji_img(content)
+            print(new_content)
+            return content
+        return ""
+
+    @property
+    def is_emoji_msg(self) -> bool:
+        if self.msg_type == MessageType.MESSAGE_TYPE_EMOTICON:
+            return True
+        if self.msg_type == MessageType.MESSAGE_TYPE_TEXT:
+            if is_web_wechat_emoji(self.msg.text()):
+                return True
+        return False
 
     @property
     def channel_id(self) -> str:

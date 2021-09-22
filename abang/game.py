@@ -8,10 +8,10 @@ import re
 import time
 import datetime
 import itertools
-from typing import Optional, List, Any, Union
+from typing import Optional, List
 
 from wechaty_puppet import MessageType
-from wechaty import Wechaty, Contact, FileBox, MiniProgram, UrlLink, Room
+from wechaty import Contact, FileBox
 
 from emoji_chengyu.puzzle import gen_puzzle
 from emoji_chengyu.data import common_chengyu_list
@@ -188,7 +188,8 @@ class NaiveRepeat(TinyApp):
     async def on_app_start(self, _):
         self.game = {
             'history': [],
-            'mode': self.MODES[1],
+            'sayed': [],
+            'mode': self.CLEVER_MODE,
         }
 
     async def on_app_next(self, message: WechatyMessage):
@@ -207,11 +208,15 @@ class NaiveRepeat(TinyApp):
             if random.random() < self.RANDOM_RATIO:
                 repeat = True
         elif self.game['mode'] == '智能复读':
+            if content in self.game['sayed']:
+                repeat = False
             if self.game['history'].count(content) > 1:
                 repeat = True
 
         if repeat:
             await self.ctx.repeat(message.msg)
+            self.game['sayed'].append(content)
+            self.game['sayed'] = self.game['sayed'][-self.HISTORY_CONTENT_LEN:]
 
 
 class EmojiChengyu(TinyApp, WinnerMixin):
