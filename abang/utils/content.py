@@ -1,6 +1,7 @@
 import logging
 
 from bs4 import BeautifulSoup
+import cn2an
 import pypinyin
 
 
@@ -62,3 +63,7 @@ def is_wechat_emoji_equal(s1: str, s2: str) -> bool:
     emoji1 = s1[r1:]
     emoji2 = s2[:len(emoji1)]
     return emoji1 == emoji2
+
+
+def content_to_number(content: str) -> int:
+    return cn2an.cn2an(content, "smart")

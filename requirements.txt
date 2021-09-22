@@ -6,3 +6,4 @@ cachetools
 pypinyin
 wechaty
 beautifulsoup4
+cn2an

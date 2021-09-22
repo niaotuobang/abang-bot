@@ -18,7 +18,7 @@ from emoji_chengyu.data import DefaultChengyuManager
 
 from core import GameData
 from core import ChannelContext, WechatyMessage
-from utils.content import is_pinyin_equal, is_wechat_emoji_equal
+from utils.content import is_pinyin_equal, is_wechat_emoji_equal, content_to_number
 from utils.chengyu import ChengyuItem, choice_common_chengyu
 
 
@@ -520,12 +520,12 @@ class SevenSeven(TinyApp):
     async def send_matched_info(self):
         reply_contents = ['抽奖进度', f'共{len(self.game["matched"])}人抽中', '- - - - - - - - - - - -']
         for wx_id in self.game['matched']:
-            reply_contents.append(self.get_matched_content(wx_id))
+            reply_contents.append(await self.get_matched_content(wx_id))
         reply_content = '\n'.join(reply_contents)
 
         await self.ctx.say(reply_content)
 
-    def get_matched_content(self, wx_id):
+    async def get_matched_content(self, wx_id):
         if wx_id not in self.game['matched']:
             return None
 
@@ -538,7 +538,7 @@ class SevenSeven(TinyApp):
 
     async def check_new_case(self, message, gift_content):
         if message.sender_id in self.game['matched']:
-            reply_content = '您已参与抽奖 ' + self.get_matched_content(message.sender_id)
+            reply_content = '您已参与抽奖 ' + await self.get_matched_content(message.sender_id)
             await self.ctx.say(reply_content)
             return
 
@@ -557,7 +557,7 @@ class SevenSeven(TinyApp):
         member_ids = list(set(self.game['member_ids']) - set([giver_id]))
         self.game['member_ids'] = member_ids
 
-        reply_content = '恭喜 ' + self.get_matched_content(message.sender_id)
+        reply_content = '恭喜 ' + await self.get_matched_content(message.sender_id)
         await self.ctx.say(reply_content, [message.sender_id])
         return
 
@@ -580,41 +580,41 @@ class SevenSeven(TinyApp):
 class Choice(TinyApp):
     APP_NAME = '抽奖'
     APP_DESC = '输入「抽N个人xxx」进行抽奖'
-    CHOICE_RE = re.compile(r'抽([\t\d ]+)个?人(\w+)?')
+    CHOICE_RE = re.compile(r'抽([\t\d一二三四五六七八九十百千万]+)个?人(\w+)?')
 
     def check_is_start(self, message: WechatyMessage) -> bool:
         flag = self.CHOICE_RE.search(message.content)
         return bool(flag)
 
-    def parse_N_and_XX(self, message):
-        match = self.CHOICE_RE.search(message.content)
+    def parse_number_and_thing(self, content: str) -> (Optional[int], Optional[str]):
+        match = self.CHOICE_RE.search(content)
         if not match:
             return None, None
         N, XX = match.groups()
         N = N.replace(' ', '').replace('\t', '').strip()
         XX = XX.strip() if XX else ''
-        return int(N), XX
+        number = content_to_number(N)
+        return number, XX
 
     async def on_app_next(self, message: WechatyMessage):
-        N, XX = self.parse_N_and_XX(message)
-        if not N or not XX:
+        number, thing = self.parse_number_and_thing(message.content)
+        if not number or not thing:
             return
+
         members = await self.ctx.get_channel_member_ids()
-        if len(members) < N:
+        if len(members) < number:
             await self.ctx.say('抽奖人数超过群聊人数, 请重新输出', [message.sender_id])
             return
 
-        members2: List[Contact] = random.sample(members, N)
+        members2: List[Contact] = random.sample(members, number)
         reply_contents = [
             f'@{message.msg.talker().name} 发起的抽奖结果公示',
-            f'抽奖详情: {N}人, {XX}',
+            f'抽奖详情: {number}人, {thing}',
             self.NEXT_LINE,
         ]
 
-        # mention_ids = []
         for member in members2:
             reply_contents.append(f'@{member.name}')
-            # mention_ids.append(member.contact_id)
 
         reply_content = '\n'.join(reply_contents)
         await self.ctx.say(reply_content)
