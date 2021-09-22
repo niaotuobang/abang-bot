@@ -16,26 +16,10 @@ from wechaty import Contact, FileBox
 from emoji_chengyu.puzzle import gen_puzzle
 from emoji_chengyu.data import common_chengyu_list
 from emoji_chengyu.data import DefaultChengyuManager
-import pypinyin
 
 from core import GameData
 from core import ChannelContext, WechatyMessage
-
-
-def is_pinyin_equal(wordA, wordB, strict=False) -> bool:
-    assert len(wordA) == 1
-    assert len(wordB) == 1
-    if wordA == wordB:
-        return True
-
-    style = pypinyin.Style.TONE if strict else pypinyin.Style.NORMAL
-
-    pinyinsA = pypinyin.pinyin(wordA, style=style)
-    pinyinsB = pypinyin.pinyin(wordB, style=style)
-    if set(pinyinsA[0]) & set(pinyinsB[0]):
-        return True
-
-    return False
+from utils.content import is_pinyin_equal, is_wechat_emoji_equal
 
 
 def choice_common_chengyu():
@@ -460,12 +444,12 @@ class HumanWuGong(ChengyuLoong):
     THIS_QUESTION = '当前接龙'
     APP_DESC = f'输入 {THIS_QUESTION} 显示正在接龙的词'
 
-    def is_match(self, old_word, new_word):
-        old_word = self.game['last']
-        equal = is_pinyin_equal(old_word[-1], new_word[0])
-        if not equal:
-            return False
-        return True
+    def is_match(self, old_word: str, new_word: str) -> bool:
+        if is_pinyin_equal(old_word[-1], new_word[0]):
+            return True
+        if is_wechat_emoji_equal(old_word, new_word):
+            return True
+        return False
 
     async def on_app_next(self, message):
         content = message.content
