@@ -580,7 +580,7 @@ class SevenSeven(TinyApp):
 class Choice(TinyApp):
     APP_NAME = '抽奖'
     APP_DESC = '输入「抽N个xxx」进行抽奖'
-    CHOICE_RE = re.compile(r'(阿邦)?抽([\t\d一二三四五六七八九十百千万]+)(个|人|位)?(\w+)?')
+    CHOICE_RE = re.compile(r'^(阿邦)?抽([\t\d一二三四五六七八九十百千万]+)(个|人|位)?(\w+)?')
 
     def check_is_start(self, message: WechatyMessage) -> bool:
         flag = self.CHOICE_RE.search(message.content)
