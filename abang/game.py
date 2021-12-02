@@ -579,26 +579,26 @@ class SevenSeven(TinyApp):
 
 class Choice(TinyApp):
     APP_NAME = '抽奖'
-    APP_DESC = '输入「抽N个人xxx」进行抽奖'
-    CHOICE_RE = re.compile(r'抽([\t\d一二三四五六七八九十百千万]+)个?人(\w+)?')
+    APP_DESC = '输入「抽N个xxx」进行抽奖'
+    CHOICE_RE = re.compile(r'(阿邦)?抽([\t\d一二三四五六七八九十百千万]+)(个|人|位)?(\w+)?')
 
     def check_is_start(self, message: WechatyMessage) -> bool:
         flag = self.CHOICE_RE.search(message.content)
         return bool(flag)
 
-    def parse_number_and_thing(self, content: str) -> (Optional[int], Optional[str]):
+    def parse_number_and_thing(self, content: str) -> Optional[int]:
         match = self.CHOICE_RE.search(content)
         if not match:
             return None, None
-        N, XX = match.groups()
+        # ('阿邦', '1', '位', '狗东西吃饭')
+        _, N, _, _ = match.groups()
         N = N.replace(' ', '').replace('\t', '').strip()
-        XX = XX.strip() if XX else ''
         number = content_to_number(N)
-        return number, XX
+        return number
 
     async def on_app_next(self, message: WechatyMessage):
-        number, thing = self.parse_number_and_thing(message.content)
-        if not number or not thing:
+        number = self.parse_number_and_thing(message.content)
+        if not number:
             return
 
         members = await self.ctx.get_channel_member_ids()
@@ -609,7 +609,7 @@ class Choice(TinyApp):
         members2: List[Contact] = random.sample(members, number)
         reply_contents = [
             f'@{message.msg.talker().name} 发起的抽奖结果公示',
-            f'抽奖详情: {number}人, {thing}',
+            f'抽奖详情: {message.content}',
             self.NEXT_LINE,
         ]
 
