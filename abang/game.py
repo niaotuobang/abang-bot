@@ -223,7 +223,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         self.stop_record_winner()
 
     def make_more_item(self):
-        N = 60
+        N = 100
         pairs = gen_puzzle()
         pairs = filter(None, pairs)
         pairs = filter(lambda pair: len(pair.puzzle) == 4, pairs)
@@ -239,7 +239,8 @@ class EmojiChengyu(TinyApp, WinnerMixin):
             used_words[word] = True
             return True
 
-        pairs = list(filter(is_not_used, pairs))
+        pairs = list(filter(is_not_used, pairs))[:30]
+        random.shuffle(pairs)
 
         self.game['items'] = pairs[:10]
 
