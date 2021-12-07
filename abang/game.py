@@ -297,7 +297,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
         self.record_winner(message.sender_id)
         reply_content = '恭喜你猜对了, {} 的答案是 {}'.format(
-            ''.join(item.puzzle),
+            question,
             answer)
 
         await self.ctx.say(reply_content, [message.sender_id])
