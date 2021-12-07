@@ -226,19 +226,22 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         N = 60
         pairs = gen_puzzle()
         pairs = filter(None, pairs)
-        pairs = filter(lambda pair: len(pair.word) == 4, pairs)
+        pairs = filter(lambda pair: len(pair.puzzle) == 4, pairs)
         pairs = itertools.islice(pairs, 0, N)
         pairs = list(pairs)
-        pairs.sort(key=lambda pair: pair.emojis.count(None))
+        pairs.sort(key=lambda pair: pair.puzzle.count(None))
 
-        pairs2 = []
         used_words = {}
-        for pair in pairs:
-            if pair['word'] not in used_words:
-                pairs2.append(pair)
-                used_words[pair['word']] = True
+        def is_not_used(pair):
+            word = pair.chengyu_item.word
+            if word in used_words:
+                return False
+            used_words[word] = True
+            return True
 
-        self.game['items'] = pairs2[:20]
+        pairs = list(filter(is_not_used, pairs))
+
+        self.game['items'] = pairs[:20]
 
     async def send_one_case(self):
         if len(self.game['items']) == 0:
