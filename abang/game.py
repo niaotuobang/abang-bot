@@ -229,7 +229,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         pairs = filter(lambda pair: len(pair.puzzle) == 4, pairs)
         pairs = itertools.islice(pairs, 0, N)
         pairs = list(pairs)
-        pairs.sort(key=lambda pair: pair.mask.count(None))
+        pairs.sort(key=lambda pair: pair.mask.count(False))
 
         used_words = {}
         def is_not_used(pair):
