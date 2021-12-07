@@ -253,7 +253,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         question = '第{} 题 ({}个字): {}'.format(
             self.game['index'],
             len(item.puzzle),
-            item.puzzle)
+            ''.join(item.puzzle))
 
         await self.ctx.say(question)
 
@@ -276,11 +276,12 @@ class EmojiChengyu(TinyApp, WinnerMixin):
         last_item = self.game['last']['item']
         last_create_time = self.game['last']['create_time']
 
-        answer = last_item['word']
+        question = ''.join(last_item.puzzle)
+        answer = last_item.chengyu_item.word
         if message.content != answer:
             # timeout
             if time.time() - last_create_time >= 45 or content == '我要答案':
-                reply_content = '很遗憾, {} 的答案是 {}'.format(last_item['emoji'], last_item['word'])
+                reply_content = '很遗憾, {} 的答案是 {}'.format(question, answer)
                 await self.ctx.say(reply_content)
                 return True
             # tip
@@ -296,8 +297,8 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
         self.record_winner(message.sender_id)
         reply_content = '恭喜你猜对了, {} 的答案是 {}'.format(
-            last_item['emoji'],
-            last_item['word'])
+            ''.join(item.puzzle),
+            answer)
 
         await self.ctx.say(reply_content, [message.sender_id])
         return True
