@@ -126,7 +126,7 @@ class WinnerMixin(object):
             winner_id = item[0]
             count = item[1]
             nickname = await self.ctx.get_member_nick(winner_id)
-            content = f'{medals[index]} 第 {index + 1} 名: @{nickname} (赢了 {count} 次)'
+            content = f'{medals[index]} 第 {index + 1} 名: @{nickname} (猜对 {count} 次)'
             contents.append(content)
 
         reply_content = '\n'.join(contents)
@@ -241,7 +241,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
         pairs = list(filter(is_not_used, pairs))
 
-        self.game['items'] = pairs[:20]
+        self.game['items'] = pairs[:10]
 
     async def send_one_case(self):
         if len(self.game['items']) == 0:
