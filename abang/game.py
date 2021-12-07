@@ -252,8 +252,8 @@ class EmojiChengyu(TinyApp, WinnerMixin):
 
         question = '第{} 题 ({}个字): {}'.format(
             self.game['index'],
-            len(item['word']),
-            item['emoji'])
+            len(item.puzzle),
+            item.puzzle)
 
         await self.ctx.say(question)
 
@@ -263,7 +263,7 @@ class EmojiChengyu(TinyApp, WinnerMixin):
             'tip': False,
         }
 
-        print(item['word'], item['emoji'])
+        print(item)
         return True
 
     async def check_one_case(self, message) -> bool:
